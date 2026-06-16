@@ -33,13 +33,18 @@
 
       <!-- Error -->
       @if (errorMsg()) {
-        <div class="mb-4 px-4 py-3 rounded-xl text-sm text-red-300 flex items-center gap-2"
+        <div class="mb-4 px-4 py-3 rounded-xl text-sm text-red-300" role="alert"
              style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          {{ errorMsg() }}
+          <div class="flex items-center gap-2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            {{ errorMsg() }}
+          </div>
+          <a routerLink="/forgot-password" class="block mt-2 text-xs font-semibold hover:underline" style="color:#f0c952">
+            ¿Has olvidado tu contraseña? Recupérala aquí
+          </a>
         </div>
       }
 

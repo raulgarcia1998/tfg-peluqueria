@@ -78,7 +78,7 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     this._currentUser.set(null);
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/login']);
   }
 
   /** Devuelve el token JWT almacenado */
