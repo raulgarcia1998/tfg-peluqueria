@@ -2,8 +2,8 @@
 // Configuración centralizada de navegación
 // Define todas las rutas disponibles con sus labels, iconos y roles requeridos
 
-export type UserRole = 'ADMIN' | 'USER' | 'PUBLIC';
-export type IconType = 'home' | 'calendar' | 'clock' | 'star' | 'users' | 'edit';
+export type UserRole = 'ADMIN' | 'EMPLEADO' | 'USER' | 'PUBLIC';
+export type IconType = 'home' | 'calendar' | 'clock' | 'star' | 'users' | 'edit' | 'phone';
 
 export interface NavigationRoute {
   path: string;
@@ -52,6 +52,13 @@ export const ADMIN_ROUTES: NavigationRoute[] = [
     iconType: 'home',
     roles: ['ADMIN'],
     section: 'Principal'
+  },
+  {
+    path: '/admin/agenda-semanal',
+    label: 'Agenda Rápida',
+    iconType: 'phone',
+    roles: ['ADMIN', 'EMPLEADO'],
+    section: 'Gestión'
   },
   {
     path: '/admin/citas',

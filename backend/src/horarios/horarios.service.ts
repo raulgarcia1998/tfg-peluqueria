@@ -243,6 +243,74 @@ export class HorariosService {
     return { fecha, duracionConsultada: duracionSolicitada, bloques, slots: allSlots };
   }
 
+  /**
+   * Agenda semanal completa (7 días desde fechaInicio) con cada franja horaria
+   * desglosada en slots discretos (paso = duracionCorteMin del día), marcando
+   * si están libres u ocupados y, en ese caso, con quién (cliente o invitado).
+   * Pensada para el panel de agendamiento rápido de Admin/Empleado.
+   */
+  async getDisponibilidadSemana(fechaInicio: string) {
+    const nombresDias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const dias: any[] = [];
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(`${fechaInicio}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + i);
+      const fecha = d.toISOString().slice(0, 10);
+
+      const horario = await this.repo.findOne({ where: { fecha, activo: true }, relations: ['franjas'] });
+
+      if (!horario) {
+        dias.push({ fecha, diaSemana: nombresDias[d.getUTCDay()], activo: false, slots: [] });
+        continue;
+      }
+
+      const franjas = this.getFranjasEfectivas(horario)
+        .sort((a, b) => this.toMinutes(a.horaInicio) - this.toMinutes(b.horaInicio));
+
+      const citasDelDia = await this.citasRepo.findAll({
+        fechaDesde: `${fecha}T00:00:00Z`,
+        fechaHasta: `${fecha}T23:59:59Z`,
+      });
+      const citasActivas = citasDelDia.filter(c => c.estado !== 'CANCELADA');
+
+      const step = horario.duracionCorteMin;
+      const slots: any[] = [];
+
+      for (const franja of franjas) {
+        let current = this.toMinutes(franja.horaInicio);
+        const fin = this.toMinutes(franja.horaFin);
+
+        while (current + step <= fin) {
+          const horaStr = this.toTime(current);
+          const cita = citasActivas.find(
+            c => this.toMinutes(new Date(c.fechaHora).toISOString().slice(11, 16)) === current
+          );
+
+          slots.push({
+            hora: horaStr,
+            disponible: !cita,
+            cita: cita ? {
+              id: cita.id,
+              cliente: cita.usuario
+                ? `${cita.usuario.nombre} ${cita.usuario.apellidos}`
+                : (cita.clienteInvitadoNombre ?? 'Cliente invitado'),
+              telefono: cita.usuario?.telefono ?? cita.clienteInvitadoTelefono ?? null,
+              servicio: cita.servicio?.nombre ?? null,
+              estado: cita.estado,
+            } : null,
+          });
+
+          current += step;
+        }
+      }
+
+      dias.push({ fecha, diaSemana: nombresDias[d.getUTCDay()], activo: horario.activo, slots });
+    }
+
+    return { fechaInicio, fechaFin: dias[dias.length - 1]?.fecha, dias };
+  }
+
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   /**

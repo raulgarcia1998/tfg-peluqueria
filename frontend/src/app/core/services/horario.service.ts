@@ -10,6 +10,7 @@ import {
   HorarioDisponibilidad,
   MesDisponibilidad
 } from '../models/horario.model';
+import { AgendaSemanal } from '../models/agenda.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -61,5 +62,13 @@ export class HorarioService {
     return this.http
       .get<HorarioDisponibilidad>(`${this.API}/disponibilidad/dia/${fecha}`, { params })
       .pipe(catchError(() => of({ fecha, bloques: [], slots: [] })));
+  }
+
+  /** Admin/Empleado: agenda completa de 7 días desde fechaInicio, con citas y huecos libres */
+  getAgendaSemanal(fechaInicio: string): Observable<AgendaSemanal> {
+    const params = new HttpParams().set('fechaInicio', fechaInicio);
+    return this.http
+      .get<AgendaSemanal>(`${this.API}/disponibilidad/semana`, { params })
+      .pipe(catchError(() => of({ fechaInicio, fechaFin: fechaInicio, dias: [] })));
   }
 }

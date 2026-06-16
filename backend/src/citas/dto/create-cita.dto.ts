@@ -3,8 +3,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsInt, IsString, IsDateString,
-  IsOptional, IsPositive
+  IsOptional, IsPositive, IsIn
 } from 'class-validator';
+import type { EstadoCita } from '../entities/cita.entity';
 
 export class CreateCitaDto {
   @ApiProperty({ example: 3, description: 'ID del empleado asignado' })
@@ -28,4 +29,25 @@ export class CreateCitaDto {
   @IsString()
   @IsOptional()
   notas?: string;
+
+  @ApiPropertyOptional({ description: 'Uso interno Admin/Empleado: ID de un cliente con cuenta existente' })
+  @IsInt()
+  @IsPositive()
+  @IsOptional()
+  usuarioId?: number;
+
+  @ApiPropertyOptional({ description: 'Uso interno Admin/Empleado: nombre de un cliente sin cuenta (reserva telefónica)' })
+  @IsString()
+  @IsOptional()
+  clienteInvitadoNombre?: string;
+
+  @ApiPropertyOptional({ description: 'Teléfono de contacto del cliente invitado' })
+  @IsString()
+  @IsOptional()
+  clienteInvitadoTelefono?: string;
+
+  @ApiPropertyOptional({ enum: ['PENDIENTE', 'CONFIRMADA', 'CANCELADA', 'COMPLETADA'], description: 'Uso interno Admin/Empleado: estado inicial de la cita' })
+  @IsIn(['PENDIENTE', 'CONFIRMADA', 'CANCELADA', 'COMPLETADA'])
+  @IsOptional()
+  estado?: EstadoCita;
 }

@@ -53,4 +53,22 @@ export class UsersService {
       resetPasswordExpires: null,
     });
   }
+
+  /** Busca usuarios por nombre/apellidos/email/teléfono, opcionalmente filtrando por rol */
+  async search(filters: { search?: string; rol?: string }): Promise<User[]> {
+    const qb = this.userRepository.createQueryBuilder('u')
+      .select(['u.id', 'u.nombre', 'u.apellidos', 'u.email', 'u.telefono', 'u.rol'])
+      .orderBy('u.nombre', 'ASC')
+      .limit(20);
+
+    if (filters.rol) qb.andWhere('u.rol = :rol', { rol: filters.rol });
+    if (filters.search) {
+      qb.andWhere(
+        '(u.nombre ILIKE :q OR u.apellidos ILIKE :q OR u.email ILIKE :q OR u.telefono ILIKE :q)',
+        { q: `%${filters.search}%` }
+      );
+    }
+
+    return qb.getMany();
+  }
 }

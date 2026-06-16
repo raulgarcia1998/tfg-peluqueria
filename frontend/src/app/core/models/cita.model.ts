@@ -22,6 +22,12 @@ export interface CreateCitaDto {
   servicioId: number;
   fechaHora: string;
   notas?: string;
+  /** Uso interno Admin/Empleado: reservar para un cliente existente */
+  usuarioId?: number;
+  /** Uso interno Admin/Empleado: reservar para un cliente sin cuenta */
+  clienteInvitadoNombre?: string;
+  clienteInvitadoTelefono?: string;
+  estado?: EstadoCita;
 }
 
 export interface CitaFilter {

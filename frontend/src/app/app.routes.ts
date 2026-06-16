@@ -61,7 +61,7 @@ export const routes: Routes = [
   {
     path: 'admin',
     canActivate: [authGuard, roleGuard],
-    data: { roles: ['ADMIN'] },
+    data: { roles: ['ADMIN', 'EMPLEADO'] },
     loadComponent: () =>
       import('./features/dashboard-admin/dashboard-admin.component').then(m => m.DashboardAdminComponent),
     children: [
@@ -69,6 +69,13 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () =>
           import('./features/dashboard-admin/admin-home/admin-home.component').then(m => m.AdminHomeComponent)
+      },
+      {
+        path: 'agenda-semanal',
+        loadComponent: () =>
+          import('./features/dashboard-admin/agenda-semanal/agenda-semanal.component').then(
+            m => m.AgendaSemanalComponent
+          )
       },
       {
         path: 'horario',

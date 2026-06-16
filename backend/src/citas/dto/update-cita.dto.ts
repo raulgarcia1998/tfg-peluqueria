@@ -4,6 +4,7 @@ import { PartialType } from '@nestjs/swagger';
 import { CreateCitaDto } from './create-cita.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional } from 'class-validator';
+import type { EstadoCita } from '../entities/cita.entity';
 
 export class UpdateCitaDto extends PartialType(CreateCitaDto) {
   @ApiPropertyOptional({
@@ -12,5 +13,5 @@ export class UpdateCitaDto extends PartialType(CreateCitaDto) {
   })
   @IsEnum(['PENDIENTE', 'CONFIRMADA', 'CANCELADA', 'COMPLETADA'])
   @IsOptional()
-  estado?: string;
+  estado?: EstadoCita;
 }

@@ -61,8 +61,12 @@ export class CitasRepository {
     });
   }
 
-  async create(dto: CreateCitaDto, usuarioId: number): Promise<Cita> {
-    const cita = this.repo.create({ ...dto, usuarioId });
+  async create(dto: CreateCitaDto, usuarioId: number | null, estadoInicial?: EstadoCita): Promise<Cita> {
+    const cita = this.repo.create({
+      ...dto,
+      usuarioId: usuarioId ?? undefined,
+      ...(estadoInicial ? { estado: estadoInicial } : {}),
+    });
     return this.repo.save(cita);
   }
 
@@ -86,7 +90,7 @@ export class CitasRepository {
     const qb = this.repo.createQueryBuilder('c')
       .where('c.empleadoId = :eId', { eId: empleadoId })
       .andWhere("c.estado NOT IN ('CANCELADA', 'COMPLETADA')")
-      .andWhere('c.fechaHora < :fin AND c.fechaHora > :inicio', {
+      .andWhere('c.fechaHora < :fin AND c.fechaHora >= :inicio', {
         inicio: fechaHora,
         fin
       });

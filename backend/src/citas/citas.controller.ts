@@ -79,7 +79,7 @@ export class CitasController {
   @ApiResponse({ status: 400, description: 'Datos inválidos.' })
   @ApiResponse({ status: 409, description: 'Conflicto de horario — el empleado ya tiene una cita en ese rango.' })
   create(@Body() dto: CreateCitaDto, @Request() req: any) {
-    return this.citasService.create(dto, req.user.sub);
+    return this.citasService.create(dto, req.user);
   }
 
   /**
