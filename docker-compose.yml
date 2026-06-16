@@ -1,0 +1,46 @@
+# CC-BY-SA 4.0 — TFG Peluquería
+
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: tfg_peluqueria_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-peluqueria}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: tfg_peluqueria_api
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-peluqueria}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
+      JWT_SECRET: ${JWT_SECRET:-supersecretkey}
+      FRONTEND_URL: http://localhost:4200
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build: ./frontend
+    container_name: tfg_peluqueria_web
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+
+volumes:
+  pgdata:

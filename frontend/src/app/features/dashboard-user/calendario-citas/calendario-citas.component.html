@@ -1,0 +1,300 @@
+<div class="min-h-screen bg-[#0f0f1a] text-white selection:bg-[#d4af37]/30 pb-20">
+  
+  <div class="max-w-7xl mx-auto px-6 md:px-12 py-12 space-y-12 animate-in fade-in duration-500">
+    
+    <!-- Step 1: Select Service -->
+    <section class="space-y-8">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div class="space-y-2">
+          <div class="flex items-center gap-4">
+            <span class="flex items-center justify-center w-8 h-8 rounded-full bg-[#d4af37] text-[#0f0f1a] text-xs font-black">1</span>
+            <h2 class="text-2xl font-black tracking-tight">Selecciona tus <span class="text-[#d4af37]">Servicios</span></h2>
+          </div>
+          <p class="text-white/40 text-xs font-medium ml-12">Puedes elegir varios servicios para combinarlos en una sola sesión.</p>
+        </div>
+
+        @if (serviciosSeleccionados().length > 0) {
+          <div class="bg-[#d4af37]/10 border border-[#d4af37]/30 p-6 rounded-[2rem] flex items-center gap-8 animate-in slide-in-from-right-10 duration-500">
+            <div class="text-center">
+              <p class="text-[#d4af37]/60 text-[9px] font-bold uppercase tracking-widest mb-1">Total Tiempo</p>
+              <p class="text-white font-black text-xl">{{ duracionTotal() }} <span class="text-xs text-white/40">min</span></p>
+            </div>
+            <div class="w-px h-8 bg-white/10"></div>
+            <div class="text-center">
+              <p class="text-[#d4af37]/60 text-[9px] font-bold uppercase tracking-widest mb-1">Precio Estimado</p>
+              <p class="text-white font-black text-xl">{{ precioTotal() }}<span class="text-xs text-white/40">€</span></p>
+            </div>
+          </div>
+        }
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        @for (s of servicios(); track s.id) {
+          <button (click)="toggleServicio(s)"
+            [class.border-[#d4af37]]="estaSeleccionado(s.id)"
+            [class.bg-[#d4af37]/5]="estaSeleccionado(s.id)"
+            class="group p-6 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-white/20 transition-all text-left relative overflow-hidden">
+            
+            @if (estaSeleccionado(s.id)) {
+              <div class="absolute top-4 right-4 w-6 h-6 rounded-full bg-[#d4af37] flex items-center justify-center shadow-lg shadow-[#d4af37]/20 animate-in zoom-in duration-300">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0f0f1a" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+            }
+
+            <h3 class="font-black text-lg mb-1">{{ s.nombre }}</h3>
+            <div class="flex items-center gap-3 text-white/40 text-[10px] font-bold uppercase tracking-widest">
+              <span>{{ s.duracionMin }} min</span>
+              <span class="w-1 h-1 rounded-full bg-white/20"></span>
+              <span class="text-[#d4af37]">{{ s.precio }}€</span>
+            </div>
+          </button>
+        }
+      </div>
+    </section>
+
+    <!-- Step 2: Calendar -->
+    <section class="space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-[#d4af37] text-[#0f0f1a] text-xs font-black">2</span>
+          <h2 class="text-2xl font-black tracking-tight">Elige el <span class="text-[#d4af37]">Día</span></h2>
+        </div>
+
+        <!-- Month Navigation -->
+        <div class="flex items-center gap-4 bg-white/[0.03] border border-white/5 p-2 rounded-2xl self-start">
+          <button (click)="cambiarMes(-1)"
+            class="p-2 rounded-xl text-gray-400 transition-all hover:bg-white/5 hover:text-white active:scale-90">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+          <h3 class="text-xs font-bold text-white capitalize min-w-[140px] text-center tracking-widest">{{ tituloMes() }}</h3>
+          <button (click)="cambiarMes(1)"
+            class="p-2 rounded-xl text-gray-400 transition-all hover:bg-white/5 hover:text-white active:scale-90">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Calendar Grid -->
+      <div class="rounded-[2.5rem] bg-white/[0.02] border border-white/5 p-8 shadow-2xl">
+        <!-- Week headers -->
+        <div class="grid grid-cols-7 mb-6">
+          @for (d of diasSemana; track d) {
+            <div class="text-center text-[10px] font-black uppercase tracking-[0.2em] text-white/20 pb-4">{{ d }}</div>
+          }
+        </div>
+
+        @if (cargando()) {
+          <div class="flex flex-col items-center justify-center py-32 space-y-4">
+            <div class="w-10 h-10 border-4 border-[#d4af37]/10 border-t-[#d4af37] rounded-full animate-spin"></div>
+            <span class="text-white/20 font-bold uppercase tracking-widest text-xs">Consultando Agenda...</span>
+          </div>
+        } @else {
+          <div class="grid grid-cols-7 gap-4">
+            @for (c of celdas(); track c.fecha) {
+              <button
+                (click)="seleccionarDia(c)"
+                [disabled]="!c.esMesActual || !c.estado || c.estado === 'cerrado' || esPasado(c.fecha)"
+                class="aspect-[4/3] md:aspect-square flex flex-col items-center justify-center rounded-3xl text-sm font-bold transition-all duration-300 relative group overflow-hidden"
+                [style]="estilocelda(c)">
+                
+                <span class="relative z-10 text-xl font-black">{{ c.dia }}</span>
+                
+                @if (c.esMesActual && c.estado && c.estado !== 'cerrado' && !esPasado(c.fecha)) {
+                  <span class="text-[8px] font-black uppercase tracking-tighter mt-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                    {{ textoEstado(c.estado) }}
+                  </span>
+                }
+
+                @if (c.esHoy) {
+                  <span class="absolute top-4 right-4 w-2 h-2 rounded-full bg-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.8)]"></span>
+                }
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal: Horarios del Día (Pop up) -->
+  @if (diaModal()) {
+    <div class="fixed inset-0 z-[110] flex items-center justify-center p-6 animate-in fade-in duration-300">
+      <div class="absolute inset-0 bg-black/90 backdrop-blur-xl" (click)="diaModal.set(null)"></div>
+      
+      <div class="relative w-full max-w-2xl rounded-[3rem] bg-[#1a1a2e] border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300" (click)="$event.stopPropagation()">
+        
+        <!-- Modal Header -->
+        <div class="p-10 border-b border-white/5 flex items-center justify-between">
+          <div>
+            <h4 class="text-3xl font-black text-white capitalize mb-1">{{ fechaModalFmt() }}</h4>
+            <p class="text-[#d4af37] text-[10px] font-bold uppercase tracking-widest">Selecciona una hora para tu cita</p>
+          </div>
+          <button (click)="diaModal.set(null)" class="p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all text-white/40 hover:text-white">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="p-10">
+          @if (serviciosSeleccionados().length === 0) {
+            <div class="bg-amber-500/10 border border-amber-500/30 p-6 rounded-3xl text-amber-400 text-center space-y-4">
+              <p class="font-bold">¡Atención!</p>
+              <p class="text-sm opacity-80">Debes seleccionar al menos un servicio para ver los horarios compatibles con la duración total ({{ duracionTotal() }} min).</p>
+              <button (click)="diaModal.set(null)" class="px-8 py-3 rounded-2xl bg-amber-500 text-[#0f0f1a] font-black text-xs uppercase tracking-widest">Elegir Servicio</button>
+            </div>
+          } @else {
+            @if (cargandoSlots()) {
+              <div class="flex flex-col items-center justify-center py-20 gap-4">
+                <div class="w-12 h-12 border-4 border-[#d4af37]/10 border-t-[#d4af37] rounded-full animate-spin"></div>
+                <p class="text-white/20 font-bold uppercase tracking-widest text-xs">Buscando huecos...</p>
+              </div>
+            } @else if (bloques().length === 0 && slots().length === 0) {
+              <div class="text-center py-20 bg-white/[0.02] rounded-[2rem] border border-dashed border-white/10">
+                <p class="text-white/20 font-bold uppercase tracking-widest text-sm">No hay horarios disponibles para este día</p>
+              </div>
+            } @else {
+              <!-- Slots agrupados por bloque horario -->
+              <div class="space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                @for (bloque of bloques(); track bloque.horaInicio) {
+                  <div>
+                    <!-- Cabecera del bloque (solo si hay >1 bloque) -->
+                    @if (bloques().length > 1) {
+                      <div class="flex items-center gap-3 mb-3">
+                        <div class="h-px flex-1" style="background:rgba(212,175,55,.15)"></div>
+                        <span class="text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full"
+                              style="color:#d4af37;background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.2)">
+                          {{ bloque.horaInicio }} – {{ bloque.horaFin }}
+                        </span>
+                        <div class="h-px flex-1" style="background:rgba(212,175,55,.15)"></div>
+                      </div>
+                    }
+                    <!-- Slots del bloque -->
+                    <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                      @for (slot of bloque.slots; track slot.hora) {
+                        <button
+                          (click)="slot.disponible && seleccionarSlot(slot)"
+                          [disabled]="!slot.disponible"
+                          class="group relative py-5 rounded-3xl text-sm font-black transition-all border overflow-hidden"
+                          [style]="estiloSlot(slot)">
+                          <span class="relative z-10">{{ slot.hora }}</span>
+                          @if (slot.disponible) {
+                            <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                          }
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+                <!-- Fallback: si no hay bloques pero sí slots planos (datos legacy) -->
+                @if (bloques().length === 0 && slots().length > 0) {
+                  <div class="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                    @for (slot of slots(); track slot.hora) {
+                      <button
+                        (click)="slot.disponible && seleccionarSlot(slot)"
+                        [disabled]="!slot.disponible"
+                        class="group relative py-5 rounded-3xl text-sm font-black transition-all border overflow-hidden"
+                        [style]="estiloSlot(slot)">
+                        <span class="relative z-10">{{ slot.hora }}</span>
+                        @if (slot.disponible) {
+                          <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        }
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Confirmation Modal -->
+  @if (slotSeleccionado()) {
+    <div class="fixed inset-0 z-[120] flex items-center justify-center p-6 animate-in fade-in duration-300">
+      <div class="absolute inset-0 bg-black/95 backdrop-blur-2xl" (click)="slotSeleccionado.set(null)"></div>
+      
+      <div class="relative w-full max-w-md rounded-[3rem] bg-[#0f0f1a] border border-white/10 shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden animate-in slide-in-from-bottom-10 duration-500" (click)="$event.stopPropagation()">
+        
+        <div class="px-8 pt-12 pb-6 text-center">
+          <div class="w-20 h-20 rounded-3xl bg-[#d4af37]/10 border border-[#d4af37]/30 flex items-center justify-center mx-auto mb-6">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+          </div>
+          <h4 class="text-3xl font-black text-white mb-2">Finalizar Reserva</h4>
+          <p class="text-white/40 font-medium">Confirma los detalles de tu cita</p>
+        </div>
+
+        <div class="px-10 pb-12 space-y-6">
+          <div class="bg-white/[0.03] rounded-3xl p-6 border border-white/5 space-y-4">
+            <div class="pb-3 border-b border-white/5">
+              <span class="text-white/30 text-[10px] font-bold uppercase tracking-widest block mb-2">Servicios Seleccionados</span>
+              <div class="flex flex-wrap gap-2">
+                @for (s of serviciosSeleccionados(); track s.id) {
+                  <span class="px-3 py-1 rounded-full bg-[#d4af37]/10 border border-[#d4af37]/20 text-[#d4af37] text-[10px] font-black uppercase">
+                    {{ s.nombre }}
+                  </span>
+                }
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-white/30 text-[10px] font-bold uppercase tracking-widest">Día</span>
+              <span class="text-white font-bold capitalize">{{ fechaModalFmt() }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-white/30 text-[10px] font-bold uppercase tracking-widest">Hora</span>
+              <span class="text-[#d4af37] text-2xl font-black">{{ slotSeleccionado()?.hora }}</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-white/30 text-[10px] font-bold uppercase tracking-widest mb-3 ml-2">¿Alguna nota especial?</label>
+            <textarea [(ngModel)]="notasReserva" rows="3"
+              placeholder="Ej: Solo barba, degradado suave..."
+              class="w-full px-6 py-4 rounded-3xl text-sm text-white placeholder-white/10 outline-none resize-none bg-white/[0.04] border border-white/10 focus:border-[#d4af37]/50 transition-all">
+            </textarea>
+          </div>
+
+          @if (errReserva()) {
+            <div class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold text-center">
+              {{ errReserva() }}
+            </div>
+          }
+
+          @if (reservaOk()) {
+            <div class="p-6 rounded-[2rem] bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 text-center animate-bounce">
+              <p class="text-lg font-black uppercase tracking-tight">¡Cita Reservada!</p>
+              <p class="text-xs font-bold opacity-80 mt-1 uppercase tracking-widest">Te esperamos en BarberPro</p>
+            </div>
+          }
+
+          <div class="flex gap-4 pt-4">
+            <button (click)="slotSeleccionado.set(null)"
+              class="flex-1 py-5 rounded-2xl text-white/40 font-bold text-xs uppercase tracking-widest bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all">
+              Atrás
+            </button>
+            <button (click)="confirmarReserva()" [disabled]="reservando() || reservaOk()"
+              class="flex-[1.5] py-5 rounded-2xl bg-[#d4af37] text-[#0f0f1a] font-black text-xs uppercase tracking-widest shadow-xl shadow-[#d4af37]/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+              @if (reservando()) {
+                <div class="w-4 h-4 border-2 border-[#0f0f1a]/20 border-t-[#0f0f1a] rounded-full animate-spin mx-auto"></div>
+              } @else {
+                Confirmar Ahora
+              }
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,271 @@
+<!-- CC-BY-SA 4.0 — TFG Peluquería -->
+<!-- Accesibilidad: roles ARIA, contraste WCAG AA, labels explícitos -->
+
+<section aria-labelledby="citas-heading" class="p-6">
+  <!-- Cabecera -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <h1 id="citas-heading" class="text-2xl font-bold text-gray-900">
+      Gestión de Citas
+    </h1>
+    <button
+      id="btn-nueva-cita"
+      type="button"
+      (click)="openCreateModal()"
+      class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700
+             text-white font-medium px-4 py-2 rounded-lg transition-colors
+             focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      aria-label="Crear nueva cita">
+      <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nueva Cita
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <form
+    [formGroup]="filterForm"
+    role="search"
+    aria-label="Filtrar citas"
+    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6
+           bg-gray-50 border border-gray-200 rounded-xl p-4">
+
+    <div class="flex flex-col gap-1">
+      <label for="filter-search" class="text-sm font-medium text-gray-700">Buscar</label>
+      <input
+        id="filter-search"
+        type="search"
+        formControlName="search"
+        placeholder="Cliente, empleado..."
+        class="input-field"
+        aria-describedby="filter-search-hint"/>
+      <span id="filter-search-hint" class="sr-only">Buscar por nombre de cliente o empleado</span>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="filter-estado" class="text-sm font-medium text-gray-700">Estado</label>
+      <select id="filter-estado" formControlName="estado" class="input-field">
+        <option value="">Todos los estados</option>
+        @for (estado of ESTADOS; track estado) {
+          <option [value]="estado">{{ ESTADO_LABELS[estado] }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="filter-desde" class="text-sm font-medium text-gray-700">Desde</label>
+      <input id="filter-desde" type="date" formControlName="fechaDesde" class="input-field"/>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="filter-hasta" class="text-sm font-medium text-gray-700">Hasta</label>
+      <input id="filter-hasta" type="date" formControlName="fechaHasta" class="input-field"/>
+    </div>
+  </form>
+
+  <!-- Estado de carga / error -->
+  @if (isLoading()) {
+    <div role="status" aria-live="polite" class="flex justify-center py-12">
+      <span class="sr-only">Cargando citas...</span>
+      <div class="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600
+                  rounded-full animate-spin" aria-hidden="true"></div>
+    </div>
+  }
+
+  @if (errorMsg()) {
+    <div role="alert" class="bg-red-50 border border-red-200 text-red-700
+                              rounded-lg p-4 mb-4">
+      {{ errorMsg() }}
+    </div>
+  }
+
+  <!-- Tabla de citas -->
+  @if (!isLoading() && citas().length > 0) {
+    <div class="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+      <table class="min-w-full divide-y divide-gray-200" aria-label="Tabla de citas">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="th-cell">Cliente</th>
+            <th scope="col" class="th-cell">Empleado</th>
+            <th scope="col" class="th-cell">Servicio</th>
+            <th scope="col" class="th-cell">Fecha / Hora</th>
+            <th scope="col" class="th-cell">Estado</th>
+            <th scope="col" class="th-cell">Precio</th>
+            <th scope="col" class="th-cell sr-only">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-100">
+          @for (cita of citasPaginadas(); track trackByCita($index, cita)) {
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="td-cell font-medium text-gray-900">
+                {{ cita.usuario?.nombre }} {{ cita.usuario?.apellidos }}
+              </td>
+              <td class="td-cell text-gray-600">{{ cita.empleado?.nombre }}</td>
+              <td class="td-cell text-gray-600">{{ cita.servicio?.nombre }}</td>
+              <td class="td-cell text-gray-600 whitespace-nowrap">
+                {{ cita.fechaHora | date:'dd/MM/yyyy HH:mm' }}
+              </td>
+              <td class="td-cell">
+                <span
+                  [class]="'inline-flex items-center px-2.5 py-0.5 rounded-full
+                             text-xs font-medium ' + getEstadoClass(cita.estado)"
+                  [attr.aria-label]="'Estado: ' + ESTADO_LABELS[cita.estado]">
+                  {{ ESTADO_LABELS[cita.estado] }}
+                </span>
+              </td>
+              <td class="td-cell text-gray-700 font-medium">
+                {{ cita.precioFinal | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+              <td class="td-cell">
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    (click)="openEditModal(cita)"
+                    class="icon-btn text-indigo-600 hover:text-indigo-800"
+                    [attr.aria-label]="'Editar cita de ' + cita.usuario?.nombre">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
+                               m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="deleteCita(cita.id)"
+                    class="icon-btn text-red-500 hover:text-red-700"
+                    [attr.aria-label]="'Eliminar cita de ' + cita.usuario?.nombre">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862
+                               a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4
+                               a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    <nav aria-label="Paginación de citas" class="flex items-center justify-between mt-4">
+      <p class="text-sm text-gray-600">
+        Página {{ currentPage() }} de {{ totalPages() }}
+        · {{ citas().length }} citas en total
+      </p>
+      <div class="flex gap-2">
+        <button
+          type="button"
+          (click)="prevPage()"
+          [disabled]="currentPage() === 1"
+          class="px-3 py-1 rounded border border-gray-300 text-sm
+                 disabled:opacity-40 disabled:cursor-not-allowed
+                 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          aria-label="Página anterior">
+          ← Anterior
+        </button>
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="currentPage() === totalPages()"
+          class="px-3 py-1 rounded border border-gray-300 text-sm
+                 disabled:opacity-40 disabled:cursor-not-allowed
+                 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          aria-label="Página siguiente">
+          Siguiente →
+        </button>
+      </div>
+    </nav>
+  }
+
+  @if (!isLoading() && citas().length === 0) {
+    <div class="text-center py-16 text-gray-500">
+      <p class="text-lg font-medium">No se encontraron citas</p>
+      <p class="text-sm mt-1">Prueba a ajustar los filtros o crea una nueva cita.</p>
+    </div>
+  }
+</section>
+
+<!-- Modal Crear/Editar -->
+@if (isModalOpen()) {
+  <div
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="selectedCita() ? 'Editar cita' : 'Nueva cita'"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+      <h2 class="text-xl font-bold text-gray-900 mb-5">
+        {{ selectedCita() ? 'Editar Cita' : 'Nueva Cita' }}
+      </h2>
+
+      <form [formGroup]="citaForm" (ngSubmit)="saveCita()" class="flex flex-col gap-4" novalidate>
+
+        <div class="flex flex-col gap-1">
+          <label for="modal-empleado" class="label-field">Empleado</label>
+          <select id="modal-empleado" formControlName="empleadoId" class="input-field" required>
+            <option value="">Seleccionar empleado</option>
+            <!-- Poblar dinámicamente con pipe async -->
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label for="modal-servicio" class="label-field">Servicio</label>
+          <select id="modal-servicio" formControlName="servicioId" class="input-field" required>
+            <option value="">Seleccionar servicio</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label for="modal-fecha" class="label-field">Fecha y hora</label>
+          <input
+            id="modal-fecha"
+            type="datetime-local"
+            formControlName="fechaHora"
+            class="input-field"
+            required/>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label for="modal-estado" class="label-field">Estado</label>
+          <select id="modal-estado" formControlName="estado" class="input-field">
+            @for (estado of ESTADOS; track estado) {
+              <option [value]="estado">{{ ESTADO_LABELS[estado] }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label for="modal-notas" class="label-field">Notas (opcional)</label>
+          <textarea
+            id="modal-notas"
+            formControlName="notas"
+            rows="3"
+            class="input-field resize-none"
+            placeholder="Observaciones adicionales..."></textarea>
+        </div>
+
+        <div class="flex gap-3 justify-end mt-2">
+          <button
+            type="button"
+            (click)="closeModal()"
+            class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700
+                   hover:bg-gray-50 transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-gray-400">
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            [disabled]="citaForm.invalid"
+            class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700
+                   text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed
+                   transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            {{ selectedCita() ? 'Guardar cambios' : 'Crear cita' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
