@@ -64,6 +64,16 @@ export class AuthService {
     );
   }
 
+  /** Solicita el envío del enlace de recuperación de contraseña */
+  forgotPassword(email: string) {
+    return this.http.post<{ message: string }>(`${this.API}/forgot-password`, { email });
+  }
+
+  /** Establece una nueva contraseña a partir del token recibido por email */
+  resetPassword(token: string, newPassword: string) {
+    return this.http.post<{ message: string }>(`${this.API}/reset-password`, { token, newPassword });
+  }
+
   /** Cierra sesión y redirige al login */
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);

@@ -17,13 +17,9 @@
     </div>
 
     <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
-      @let lastSection: string | undefined = undefined;
-      @for (route of userRoutes; track route.path) {
-        @if (route.section !== lastSection) {
-          @if (route.section) {
-            @{lastSection = route.section;}
-            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 px-3 pt-4 pb-2">{{ route.section }}</p>
-          }
+      @for (route of userRoutes; track route.path; let idx = $index) {
+        @if (route.section && route.section !== userRoutes[idx - 1]?.section) {
+          <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 px-3 pt-4 pb-2">{{ route.section }}</p>
         }
         <a [routerLink]="route.path" [routerLinkActiveOptions]="route.path === '/user/dashboard' ? {exact:true} : {}" routerLinkActive="bg-[#d4af37]/10 text-[#d4af37]"
           class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-400 transition-all hover:bg-white/5 hover:text-white group">
