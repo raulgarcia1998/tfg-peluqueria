@@ -10,6 +10,7 @@ import {
   HorarioDisponibilidad,
   MesDisponibilidad
 } from '../models/horario.model';
+import { AgendaSemanal } from '../models/agenda.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -42,6 +43,16 @@ export class HorarioService {
     return this.http.delete<void>(`${this.API}/${id}`);
   }
 
+  /** Admin: aplica el mismo horario a varias fechas (o al mes completo) */
+  guardarVariosDias(dto: {
+    fechas: string[];
+    tiempoTransicionMin: number;
+    activo: boolean;
+    franjas: { horaInicio: string; horaFin: string; orden: number }[];
+  }): Observable<HorarioLaboral[]> {
+    return this.http.post<HorarioLaboral[]>(`${this.API}/bulk`, dto);
+  }
+
 
   /** Usuario: estado de disponibilidad de cada día del mes */
   getDiasDisponiblesMes(anio: number, mes: number): Observable<MesDisponibilidad> {
@@ -61,5 +72,13 @@ export class HorarioService {
     return this.http
       .get<HorarioDisponibilidad>(`${this.API}/disponibilidad/dia/${fecha}`, { params })
       .pipe(catchError(() => of({ fecha, bloques: [], slots: [] })));
+  }
+
+  /** Admin/Empleado: agenda completa de 7 días desde fechaInicio, con citas y huecos libres */
+  getAgendaSemanal(fechaInicio: string): Observable<AgendaSemanal> {
+    const params = new HttpParams().set('fechaInicio', fechaInicio);
+    return this.http
+      .get<AgendaSemanal>(`${this.API}/disponibilidad/semana`, { params })
+      .pipe(catchError(() => of({ fechaInicio, fechaFin: fechaInicio, dias: [] })));
   }
 }

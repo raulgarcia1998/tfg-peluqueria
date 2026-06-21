@@ -6,15 +6,16 @@ import {
   ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn
 } from 'typeorm';
 
-export type EstadoCita = 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA';
+export type EstadoCita = 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA' | 'NO_SHOW';
 
 @Entity('citas')
 export class Cita {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ name: 'usuario_id' })
-  usuarioId!: number;
+  /** Nullable: las citas creadas por Admin/Empleado para clientes sin cuenta no tienen usuario */
+  @Column({ name: 'usuario_id', nullable: true })
+  usuarioId?: number | null;
 
   @Column({ name: 'empleado_id' })
   empleadoId!: number;
@@ -22,9 +23,17 @@ export class Cita {
   @Column({ name: 'servicio_id' })
   servicioId!: number;
 
-  @ManyToOne('User', { onDelete: 'CASCADE' })
+  @ManyToOne('User', { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'usuario_id' })
-  usuario!: any;
+  usuario?: any;
+
+  /** Nombre del cliente cuando la cita la crea Admin/Empleado para alguien sin cuenta (reserva telefónica) */
+  @Column({ name: 'cliente_invitado_nombre', nullable: true })
+  clienteInvitadoNombre?: string;
+
+  /** Teléfono de contacto del cliente invitado */
+  @Column({ name: 'cliente_invitado_telefono', nullable: true })
+  clienteInvitadoTelefono?: string;
 
   @ManyToOne('User', { onDelete: 'SET NULL' }) // Los empleados también son usuarios
   @JoinColumn({ name: 'empleado_id' })
@@ -39,7 +48,7 @@ export class Cita {
 
   @Column({
     type: 'enum',
-    enum: ['PENDIENTE', 'CONFIRMADA', 'CANCELADA', 'COMPLETADA'],
+    enum: ['PENDIENTE', 'CONFIRMADA', 'CANCELADA', 'COMPLETADA', 'NO_SHOW'],
     default: 'PENDIENTE'
   })
   estado!: EstadoCita;

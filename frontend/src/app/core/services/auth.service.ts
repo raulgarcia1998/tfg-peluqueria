@@ -64,11 +64,26 @@ export class AuthService {
     );
   }
 
+  /** Solicita el envío del enlace de recuperación de contraseña */
+  forgotPassword(email: string) {
+    return this.http.post<{ message: string }>(`${this.API}/forgot-password`, { email });
+  }
+
+  /** Establece una nueva contraseña a partir del token recibido por email */
+  resetPassword(token: string, newPassword: string) {
+    return this.http.post<{ message: string }>(`${this.API}/reset-password`, { token, newPassword });
+  }
+
   /** Cierra sesión y redirige al login */
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     this._currentUser.set(null);
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/login']);
+  }
+
+  /** Actualiza en memoria los datos del usuario en sesión (tras editar su perfil) */
+  updateCurrentUser(user: User): void {
+    this._currentUser.set(user);
   }
 
   /** Devuelve el token JWT almacenado */

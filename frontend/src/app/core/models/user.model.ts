@@ -1,9 +1,6 @@
 // CC-BY-SA 4.0 — TFG Peluquería
 
-export interface Role {
-  id: number;
-  nombre: 'ADMIN' | 'USER' | 'EMPLEADO';
-}
+export type RolUsuario = 'ADMIN' | 'USER' | 'EMPLEADO';
 
 export interface User {
   id: number;
@@ -11,7 +8,7 @@ export interface User {
   apellidos: string;
   email: string;
   telefono?: string;
-  rol: Role;
+  rol: RolUsuario;
   createdAt: Date;
 }
 
@@ -30,5 +27,5 @@ export interface RegisterPayload {
   apellidos: string;
   email: string;
   password: string;
-  telefono?: string;
+  telefono: string;
 }

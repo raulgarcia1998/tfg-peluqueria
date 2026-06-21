@@ -27,6 +27,14 @@ export class User {
   @Column({ default: 'USER' })
   rol!: string; // Podría ser un enum o una entidad aparte, pero simplificamos
 
+  /** Hash SHA-256 del token de recuperación de contraseña (no se expone por defecto) */
+  @Column({ name: 'reset_password_token', type: 'varchar', nullable: true, select: false })
+  resetPasswordToken?: string | null;
+
+  /** Caducidad del token de recuperación (15 min desde su generación) */
+  @Column({ name: 'reset_password_expires', type: 'timestamptz', nullable: true, select: false })
+  resetPasswordExpires?: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

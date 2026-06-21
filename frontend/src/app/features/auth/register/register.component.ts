@@ -30,7 +30,7 @@ export class RegisterComponent {
     nombre:    ['', Validators.required],
     apellidos: ['', Validators.required],
     email:     ['', [Validators.required, Validators.email]],
-    telefono:  [''],
+    telefono:  ['', [Validators.required, Validators.pattern(/^\+?[\d\s\-().]{7,20}$/)]],
     password:  ['', [Validators.required, Validators.minLength(6)]],
     confirm:   ['', Validators.required]
   }, { validators: passwordMatch });
@@ -47,7 +47,7 @@ export class RegisterComponent {
     const returnUrl = this.route.snapshot.queryParams['returnUrl'];
 
     const { nombre, apellidos, email, password, telefono } = this.form.value;
-    this.auth.register({ nombre, apellidos, email, password, telefono: telefono || undefined }).subscribe({
+    this.auth.register({ nombre, apellidos, email, password, telefono }).subscribe({
       next: () => {
         if (returnUrl) {
           this.router.navigateByUrl(returnUrl);

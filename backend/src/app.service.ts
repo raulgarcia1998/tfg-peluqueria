@@ -63,7 +63,7 @@ export class AppService implements OnModuleInit {
         
         await this.horariosService.create({
           fecha: fechaStr,
-          duracionCorteMin: 30,
+          tiempoTransicionMin: 10,
           activo: true,
           franjas: [
             { horaInicio: '09:00', horaFin: '14:00' },

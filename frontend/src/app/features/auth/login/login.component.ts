@@ -44,7 +44,7 @@ export class LoginComponent {
           return;
         }
         const user = this.auth.currentUser();
-        if (user?.rol?.nombre === 'ADMIN' || user?.rol?.nombre === 'EMPLEADO') {
+        if (user?.rol === 'ADMIN' || user?.rol === 'EMPLEADO') {
           this.router.navigate(['/admin/dashboard']);
         } else {
           this.router.navigate(['/user/dashboard']);

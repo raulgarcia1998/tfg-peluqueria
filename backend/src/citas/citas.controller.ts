@@ -58,6 +58,54 @@ export class CitasController {
   }
 
   /**
+   * GET /api/v1/citas/usuario/:usuarioId/no-shows
+   * Cuenta las ausencias (NO_SHOW) de un cliente (solo Admin/Empleado)
+   */
+  @Get('usuario/:usuarioId/no-shows')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'EMPLEADO')
+  @ApiOperation({ summary: 'Contar las ausencias (no-shows) de un cliente' })
+  @ApiParam({ name: 'usuarioId', type: Number })
+  @ApiResponse({ status: 200, description: 'Número de ausencias del cliente.' })
+  countNoShows(@Param('usuarioId', ParseIntPipe) usuarioId: number) {
+    return this.citasService.countNoShows(usuarioId);
+  }
+
+  /**
+   * GET /api/v1/citas/empleado/:empleadoId/estadisticas
+   * Estadísticas de productividad de un empleado en un rango (solo Admin/Empleado)
+   */
+  @Get('empleado/:empleadoId/estadisticas')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'EMPLEADO')
+  @ApiOperation({ summary: 'Estadísticas de productividad de un empleado en un rango de fechas' })
+  @ApiParam({ name: 'empleadoId', type: Number })
+  @ApiQuery({ name: 'desde', required: true, type: String, example: '2026-06-01T00:00:00Z' })
+  @ApiQuery({ name: 'hasta', required: true, type: String, example: '2026-06-30T23:59:59Z' })
+  @ApiResponse({ status: 200, description: 'Estadísticas calculadas.' })
+  getEstadisticasEmpleado(
+    @Param('empleadoId', ParseIntPipe) empleadoId: number,
+    @Query('desde') desde: string,
+    @Query('hasta') hasta: string,
+  ) {
+    return this.citasService.getEstadisticasEmpleado(empleadoId, desde, hasta);
+  }
+
+  /**
+   * GET /api/v1/citas/usuario/:usuarioId
+   * Historial de citas de un cliente concreto (solo Admin/Empleado)
+   */
+  @Get('usuario/:usuarioId')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'EMPLEADO')
+  @ApiOperation({ summary: 'Obtener el historial de citas de un cliente' })
+  @ApiParam({ name: 'usuarioId', type: Number })
+  @ApiResponse({ status: 200, description: 'Historial de citas del cliente.' })
+  getCitasDeUsuario(@Param('usuarioId', ParseIntPipe) usuarioId: number) {
+    return this.citasService.findByUsuario(usuarioId);
+  }
+
+  /**
    * GET /api/v1/citas/:id
    */
   @Get(':id')
@@ -79,7 +127,7 @@ export class CitasController {
   @ApiResponse({ status: 400, description: 'Datos inválidos.' })
   @ApiResponse({ status: 409, description: 'Conflicto de horario — el empleado ya tiene una cita en ese rango.' })
   create(@Body() dto: CreateCitaDto, @Request() req: any) {
-    return this.citasService.create(dto, req.user.sub);
+    return this.citasService.create(dto, req.user);
   }
 
   /**

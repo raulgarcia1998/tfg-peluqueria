@@ -16,8 +16,9 @@ export class DashboardAdminComponent {
   private auth   = inject(AuthService);
   private router = inject(Router);
 
-  // Rutas de navegación centralizadas
-  adminRoutes = ADMIN_ROUTES;
+  // Agenda Rápida se renderiza aparte como acceso de emergencia
+  agendaRapida = ADMIN_ROUTES.find(r => r.path === '/admin/agenda-semanal')!;
+  adminRoutes  = ADMIN_ROUTES.filter(r => r.path !== '/admin/agenda-semanal');
 
   nombreUsuario = computed(() => {
     const u = this.auth.currentUser();

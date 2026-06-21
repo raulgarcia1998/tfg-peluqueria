@@ -1,6 +1,9 @@
 import { Controller, Post, Body, UnauthorizedException, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RegisterDto } from './dto/register.dto';
 
 @ApiTags('Auth')
 @Controller('api/v1/auth')
@@ -21,7 +24,24 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'Registro de nuevo usuario' })
   @ApiResponse({ status: 201, description: 'Usuario registrado correctamente.' })
-  async register(@Body() body: any) {
-    return this.authService.register(body);
+  async register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Solicita un enlace de recuperación de contraseña' })
+  @ApiResponse({ status: 200, description: 'Respuesta genérica (no revela si el email existe).' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Restablece la contraseña usando el token recibido por email' })
+  @ApiResponse({ status: 200, description: 'Contraseña actualizada correctamente.' })
+  @ApiResponse({ status: 400, description: 'Token inválido o expirado.' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.newPassword);
   }
 }

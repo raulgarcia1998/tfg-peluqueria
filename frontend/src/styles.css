@@ -5,12 +5,56 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ──────────────────────────────────────────────────────────────────────────
+   SISTEMA DE TEMA (Opción A — variables CSS)
+   Paleta profesional blanco/negro. Para cambiar el tema entero, basta con
+   editar estas variables: el resto de la app las referencia vía var(--token).
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Superficies base */
+  --bg:              #ffffff;   /* fondo de página (antes #0f0f1a) */
+  --bg-alt:          #f6f6f8;   /* tarjetas / superficies elevadas (antes #1e1e2e…) */
+  --border:          #e5e7eb;   /* bordes sólidos */
+
+  /* Acento (negro, para contraste; antes dorado #d4af37) */
+  --accent:          #111111;
+  --accent-2:        #2b2b2b;   /* pareja de degradado (antes #f0c952) */
+  --on-accent:       #ffffff;   /* texto/iconos sobre el acento (antes #0f0f1a) */
+
+  /* Canales RGB (para que Tailwind aplique opacidad: rgb(var(--x) / <alpha>)) */
+  --accent-rgb:      17 17 17;
+  --accent-2-rgb:    43 43 43;
+  --bg-rgb:          255 255 255;
+  --bg-alt-rgb:      246 246 248;
+
+  /* Jerarquía de texto (luminosidad invertida respecto al tema oscuro) */
+  --text:            #111827;   /* principal (antes #fff) */
+  --text-secondary:  #374151;   /* secundario (antes #d1d5db / #4b5563) */
+  --text-muted:      #6b7280;   /* atenuado (antes #9ca3af) */
+  --text-faint:      #9ca3af;   /* muy tenue (antes #6b7280) */
+
+  /* Tintes translúcidos negros sobre blanco (antes blancos sobre oscuro) */
+  --surface-1:       rgba(0,0,0,.03);  /* relleno sutil */
+  --surface-2:       rgba(0,0,0,.06);  /* inputs / superficies */
+  --border-1:        rgba(0,0,0,.10);  /* bordes translúcidos */
+
+  /* Tintes de acento (estados seleccionado/destacado; antes tintes dorados) */
+  --accent-soft:     rgba(17,17,17,.06);
+  --accent-soft-2:   rgba(17,17,17,.10);
+  --accent-border:   rgba(17,17,17,.22);
+}
+
+html, body {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
 @layer components {
   /* Inputs reutilizables */
   .input-field {
     @apply w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900
            bg-white shadow-sm placeholder:text-gray-400
-           focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
+           focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900
            disabled:bg-gray-100 disabled:cursor-not-allowed
            transition-shadow duration-150;
   }
@@ -31,6 +75,6 @@
   /* Botones icon */
   .icon-btn {
     @apply p-1.5 rounded-md transition-colors
-           focus:outline-none focus:ring-2 focus:ring-indigo-400;
+           focus:outline-none focus:ring-2 focus:ring-gray-400;
   }
 }

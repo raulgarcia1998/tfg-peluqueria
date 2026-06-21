@@ -30,7 +30,7 @@ export class CitasRepository {
       .leftJoinAndSelect('cita.usuario', 'usuario')
       .leftJoinAndSelect('cita.empleado', 'empleado')
       .leftJoinAndSelect('cita.servicio', 'servicio')
-      .orderBy('cita.fechaHora', 'DESC');
+      .orderBy('cita.fechaHora', 'ASC');
 
     if (filters.estado)     qb.andWhere('cita.estado = :estado', { estado: filters.estado });
     if (filters.servicioId) qb.andWhere('cita.servicioId = :sid', { sid: filters.servicioId });
@@ -61,8 +61,12 @@ export class CitasRepository {
     });
   }
 
-  async create(dto: CreateCitaDto, usuarioId: number): Promise<Cita> {
-    const cita = this.repo.create({ ...dto, usuarioId });
+  async create(dto: CreateCitaDto, usuarioId: number | null, estadoInicial?: EstadoCita): Promise<Cita> {
+    const cita = this.repo.create({
+      ...dto,
+      usuarioId: usuarioId ?? undefined,
+      ...(estadoInicial ? { estado: estadoInicial } : {}),
+    });
     return this.repo.save(cita);
   }
 
@@ -73,6 +77,38 @@ export class CitasRepository {
 
   async delete(id: number): Promise<void> {
     await this.repo.delete(id);
+  }
+
+  /** Cuenta las citas marcadas como ausencia (NO_SHOW) de un cliente */
+  async countNoShowsByUsuario(usuarioId: number): Promise<number> {
+    return this.repo.count({ where: { usuarioId, estado: 'NO_SHOW' } });
+  }
+
+  /** Cuenta las ausencias (NO_SHOW) de varios clientes a la vez (mapa usuarioId → nº) */
+  async countNoShowsByUsuarios(ids: number[]): Promise<Record<number, number>> {
+    if (!ids.length) return {};
+    const filas = await this.repo.createQueryBuilder('c')
+      .select('c.usuarioId', 'usuarioId')
+      .addSelect('COUNT(*)', 'count')
+      .where('c.usuarioId IN (:...ids)', { ids })
+      .andWhere("c.estado = 'NO_SHOW'")
+      .groupBy('c.usuarioId')
+      .getRawMany();
+
+    const mapa: Record<number, number> = {};
+    for (const f of filas) mapa[Number(f.usuarioId)] = Number(f.count);
+    return mapa;
+  }
+
+  /** Citas atendidas por un empleado dentro de un rango de fechas (con servicio) */
+  async findByEmpleadoEnRango(empleadoId: number, desde: string, hasta: string): Promise<Cita[]> {
+    return this.repo.createQueryBuilder('cita')
+      .leftJoinAndSelect('cita.servicio', 'servicio')
+      .leftJoinAndSelect('cita.usuario', 'usuario')
+      .where('cita.empleadoId = :empleadoId', { empleadoId })
+      .andWhere('cita.fechaHora >= :desde AND cita.fechaHora <= :hasta', { desde, hasta })
+      .orderBy('cita.fechaHora', 'ASC')
+      .getMany();
   }
 
   /** Comprueba conflictos de horario para un empleado */
@@ -86,7 +122,7 @@ export class CitasRepository {
     const qb = this.repo.createQueryBuilder('c')
       .where('c.empleadoId = :eId', { eId: empleadoId })
       .andWhere("c.estado NOT IN ('CANCELADA', 'COMPLETADA')")
-      .andWhere('c.fechaHora < :fin AND c.fechaHora > :inicio', {
+      .andWhere('c.fechaHora < :fin AND c.fechaHora >= :inicio', {
         inicio: fechaHora,
         fin
       });

@@ -16,6 +16,16 @@ export const routes: Routes = [
       import('./features/auth/register/register.component').then(m => m.RegisterComponent)
   },
   {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import('./features/auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./features/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
+  },
+  {
     path: 'reservar',
     loadComponent: () =>
       import('./features/dashboard-user/calendario-citas/calendario-citas.component').then(
@@ -51,7 +61,7 @@ export const routes: Routes = [
   {
     path: 'admin',
     canActivate: [authGuard, roleGuard],
-    data: { roles: ['ADMIN'] },
+    data: { roles: ['ADMIN', 'EMPLEADO'] },
     loadComponent: () =>
       import('./features/dashboard-admin/dashboard-admin.component').then(m => m.DashboardAdminComponent),
     children: [
@@ -59,6 +69,13 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () =>
           import('./features/dashboard-admin/admin-home/admin-home.component').then(m => m.AdminHomeComponent)
+      },
+      {
+        path: 'agenda-semanal',
+        loadComponent: () =>
+          import('./features/dashboard-admin/agenda-semanal/agenda-semanal.component').then(
+            m => m.AgendaSemanalComponent
+          )
       },
       {
         path: 'horario',
@@ -88,8 +105,37 @@ export const routes: Routes = [
             m => m.EmpleadosCrudComponent
           )
       },
+      {
+        path: 'usuarios',
+        loadComponent: () =>
+          import('./features/dashboard-admin/usuarios-crud/usuarios-crud.component').then(
+            m => m.UsuariosCrudComponent
+          )
+      },
+      {
+        path: 'perfil',
+        loadComponent: () =>
+          import('./features/perfil-usuario/perfil-usuario.component').then(m => m.PerfilUsuarioComponent)
+      },
+      {
+        path: 'perfil/:id',
+        loadComponent: () =>
+          import('./features/perfil-usuario/perfil-usuario.component').then(m => m.PerfilUsuarioComponent)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
+  },
+  {
+    path: 'perfil',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/perfil-usuario/perfil-usuario.component').then(m => m.PerfilUsuarioComponent)
+  },
+  {
+    path: 'perfil/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/perfil-usuario/perfil-usuario.component').then(m => m.PerfilUsuarioComponent)
   },
   {
     path: 'acceso-denegado',

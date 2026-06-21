@@ -10,10 +10,12 @@ export interface FranjaHoraria {
 
 export interface HorarioLaboral {
   id?: number;
-  fecha: string;             // 'YYYY-MM-DD'
-  duracionCorteMin: number;  // Paso en minutos entre slots
+  fecha: string;                // 'YYYY-MM-DD'
+  /** @deprecated Sustituido por tiempoTransicionMin. Antiguo "paso entre citas". */
+  duracionCorteMin?: number;
+  tiempoTransicionMin: number;  // Buffer (min) reservado tras cada cita
   activo: boolean;
-  franjas: FranjaHoraria[];  // Bloques del día (≥1 para jornada partida)
+  franjas: FranjaHoraria[];     // Bloques del día (≥1 para jornada partida)
 }
 
 export interface SlotHorario {
