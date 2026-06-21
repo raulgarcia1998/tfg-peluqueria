@@ -11,9 +11,9 @@
       id="btn-nueva-cita"
       type="button"
       (click)="openCreateModal()"
-      class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700
+      class="inline-flex items-center gap-2 bg-gray-900 hover:bg-black
              text-white font-medium px-4 py-2 rounded-lg transition-colors
-             focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+             focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
       aria-label="Crear nueva cita">
       <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -67,7 +67,7 @@
   @if (isLoading()) {
     <div role="status" aria-live="polite" class="flex justify-center py-12">
       <span class="sr-only">Cargando citas...</span>
-      <div class="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600
+      <div class="w-10 h-10 border-4 border-gray-200 border-t-gray-900
                   rounded-full animate-spin" aria-hidden="true"></div>
     </div>
   }
@@ -121,7 +121,7 @@
                   <button
                     type="button"
                     (click)="openEditModal(cita)"
-                    class="icon-btn text-indigo-600 hover:text-indigo-800"
+                    class="icon-btn text-gray-700 hover:text-black"
                     [attr.aria-label]="'Editar cita de ' + cita.usuario?.nombre">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -162,7 +162,7 @@
           [disabled]="currentPage() === 1"
           class="px-3 py-1 rounded border border-gray-300 text-sm
                  disabled:opacity-40 disabled:cursor-not-allowed
-                 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900"
           aria-label="Página anterior">
           ← Anterior
         </button>
@@ -172,7 +172,7 @@
           [disabled]="currentPage() === totalPages()"
           class="px-3 py-1 rounded border border-gray-300 text-sm
                  disabled:opacity-40 disabled:cursor-not-allowed
-                 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900"
           aria-label="Página siguiente">
           Siguiente →
         </button>
@@ -259,9 +259,9 @@
           <button
             type="submit"
             [disabled]="citaForm.invalid"
-            class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700
+            class="px-4 py-2 rounded-lg bg-gray-900 hover:bg-black
                    text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed
-                   transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                   transition-colors focus:outline-none focus:ring-2 focus:ring-gray-900">
             {{ selectedCita() ? 'Guardar cambios' : 'Crear cita' }}
           </button>
         </div>

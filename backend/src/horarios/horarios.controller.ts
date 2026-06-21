@@ -2,7 +2,7 @@ import {
   Controller, Get, Post, Put, Delete,
   Body, Param, Query, ParseIntPipe, UseGuards
 } from '@nestjs/common';
-import { HorariosService, CreateHorarioDto } from './horarios.service';
+import { HorariosService, CreateHorarioDto, BulkHorarioDto } from './horarios.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -32,6 +32,15 @@ export class HorariosController {
   @ApiOperation({ summary: 'Admin: crear horario laboral con franjas' })
   create(@Body() dto: CreateHorarioDto) {
     return this.horariosService.create(dto);
+  }
+
+  @Post('bulk')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin: aplicar el mismo horario a varios días (o al mes completo)' })
+  createBulk(@Body() dto: BulkHorarioDto) {
+    return this.horariosService.upsertMany(dto);
   }
 
   @Put(':id')

@@ -3,25 +3,25 @@
   <!-- Cabecera -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
     <div>
-      <h2 class="text-3xl font-bold text-white mb-2">Agenda Rápida Semanal</h2>
-      <p class="text-gray-400">Asigna citas al instante mientras atiendes una llamada.</p>
+      <h2 class="text-3xl font-bold text-gray-900 mb-2">Agenda Rápida Semanal</h2>
+      <p class="text-gray-600">Asigna citas al instante mientras atiendes una llamada.</p>
     </div>
 
     <div class="flex items-center gap-2">
       <button (click)="semanaAnterior()" aria-label="Semana anterior"
-        class="p-2.5 rounded-xl text-gray-400 border border-white/10 hover:bg-white/5 hover:text-white transition-all">
+        class="p-2.5 rounded-xl text-gray-600 border border-gray-200/10 hover:bg-black/5 hover:text-gray-900 transition-all">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
       </button>
 
       <button (click)="semanaActual()"
-        class="px-4 py-2.5 rounded-xl text-sm font-bold text-gray-300 border border-white/10 hover:bg-white/5 hover:text-white transition-all">
+        class="px-4 py-2.5 rounded-xl text-sm font-bold text-gray-700 border border-gray-200/10 hover:bg-black/5 hover:text-gray-900 transition-all">
         {{ rangoTexto() }}
       </button>
 
       <button (click)="semanaSiguiente()" aria-label="Semana siguiente"
-        class="p-2.5 rounded-xl text-gray-400 border border-white/10 hover:bg-white/5 hover:text-white transition-all">
+        class="p-2.5 rounded-xl text-gray-600 border border-gray-200/10 hover:bg-black/5 hover:text-gray-900 transition-all">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <polyline points="9 18 15 12 9 6"/>
         </svg>
@@ -30,7 +30,7 @@
   </div>
 
   <!-- Leyenda -->
-  <div class="flex flex-wrap gap-4 mb-6 text-xs font-semibold text-gray-400">
+  <div class="flex flex-wrap gap-4 mb-6 text-xs font-semibold text-gray-600">
     <span class="flex items-center gap-2">
       <span class="w-3 h-3 rounded-full" style="background:rgba(16,185,129,.5)"></span> Disponible
     </span>
@@ -47,7 +47,7 @@
       <span class="text-lg">Cargando agenda...</span>
     </div>
   } @else if (!agenda() || agenda()!.dias.length === 0) {
-    <div class="py-20 text-center text-gray-500 bg-white/5 rounded-3xl border border-white/10">
+    <div class="py-20 text-center text-gray-500 bg-black/5 rounded-3xl border border-gray-200/10">
       No se ha podido cargar la agenda de esta semana.
     </div>
   } @else {
@@ -56,16 +56,16 @@
       @for (dia of agenda()!.dias; track dia.fecha) {
         <div class="rounded-2xl border overflow-hidden flex flex-col"
              [style]="esHoy(dia.fecha)
-               ? 'background:rgba(212,175,55,.06); border-color:rgba(212,175,55,.35)'
-               : 'background:rgba(255,255,255,.02); border-color:rgba(255,255,255,.08)'">
+               ? 'background:var(--accent-soft); border-color:var(--accent-border)'
+               : 'background:var(--surface-1); border-color:var(--surface-2)'">
 
           <!-- Cabecera del día -->
-          <div class="px-4 py-3 border-b border-white/10 text-center">
+          <div class="px-4 py-3 border-b border-gray-200/10 text-center">
             <p class="text-[10px] font-bold uppercase tracking-widest"
-               [style]="esHoy(dia.fecha) ? 'color:#d4af37' : 'color:rgba(255,255,255,.4)'">
+               [style]="esHoy(dia.fecha) ? 'color:var(--accent)' : 'color:rgba(255,255,255,.4)'">
               {{ dia.diaSemana }}
             </p>
-            <p class="text-white font-bold text-sm">{{ formatearFechaCorta(dia.fecha) }}</p>
+            <p class="text-gray-900 font-bold text-sm">{{ formatearFechaCorta(dia.fecha) }}</p>
           </div>
 
           <!-- Cascada vertical de franjas -->
@@ -80,8 +80,8 @@
                   <button (click)="abrirModal(dia, slot)"
                     class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-left transition-all hover:-translate-y-0.5"
                     style="background:rgba(16,185,129,.12); border:1px solid rgba(16,185,129,.3)">
-                    <span class="text-sm font-bold text-emerald-300">{{ slot.hora }}</span>
-                    <span class="flex items-center gap-1 text-[10px] font-bold uppercase text-emerald-300/80">
+                    <span class="text-sm font-bold text-emerald-600">{{ slot.hora }}</span>
+                    <span class="flex items-center gap-1 text-[10px] font-bold uppercase text-emerald-600/80">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true">
                         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                       </svg>
@@ -90,13 +90,20 @@
                   </button>
                 } @else {
                   <div class="w-full px-3 py-2.5 rounded-xl opacity-90"
-                       style="background:rgba(239,68,68,.10); border:1px solid rgba(239,68,68,.25)"
-                       [title]="slot.cita?.telefono ?? ''">
+                       style="background:rgba(239,68,68,.10); border:1px solid rgba(239,68,68,.25)">
                     <div class="flex items-center justify-between gap-2">
-                      <span class="text-sm font-bold text-red-300">{{ slot.hora }}</span>
-                      <span class="text-[10px] font-bold uppercase text-red-300/70">Ocupada</span>
+                      <span class="text-sm font-bold text-red-600">{{ slot.hora }}</span>
+                      <span class="text-[10px] font-bold uppercase text-red-600/70">Ocupada</span>
                     </div>
-                    <p class="text-xs text-gray-300 truncate mt-0.5">{{ slot.cita?.cliente }}</p>
+                    <p class="text-xs text-gray-700 truncate mt-0.5">{{ slot.cita?.cliente }}</p>
+                    @if (slot.cita?.telefono) {
+                      <p class="text-[10px] text-gray-600 truncate flex items-center gap-1 mt-0.5">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.9 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+                        </svg>
+                        {{ slot.cita?.telefono }}
+                      </p>
+                    }
                     @if (slot.cita?.servicio) {
                       <p class="text-[10px] text-gray-500 truncate">{{ slot.cita?.servicio }}</p>
                     }
@@ -116,13 +123,13 @@
       <div class="absolute inset-0 bg-black/70" (click)="cerrarModal()"></div>
 
       <div class="relative w-full max-w-md rounded-2xl p-6 shadow-2xl"
-           style="background:#161625; border:1px solid rgba(255,255,255,.1)">
+           style="background:var(--bg-alt); border:1px solid var(--border-1)">
 
         <div class="flex items-center justify-between mb-5">
-          <h3 id="modal-titulo" class="text-lg font-bold text-white">
+          <h3 id="modal-titulo" class="text-lg font-bold text-gray-900">
             Asignar cita — {{ horaSeleccionada() }}
           </h3>
-          <button (click)="cerrarModal()" aria-label="Cerrar" class="text-gray-500 hover:text-white transition-colors">
+          <button (click)="cerrarModal()" aria-label="Cerrar" class="text-gray-500 hover:text-gray-900 transition-colors">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
@@ -130,40 +137,40 @@
         </div>
 
         @if (errorModal()) {
-          <div class="mb-4 px-4 py-3 rounded-xl text-sm text-red-300" role="alert"
+          <div class="mb-4 px-4 py-3 rounded-xl text-sm text-red-600" role="alert"
                style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3)">
             {{ errorModal() }}
           </div>
         }
 
         <!-- Toggle tipo de cliente -->
-        <div class="flex gap-2 mb-4 p-1 rounded-xl" style="background:rgba(255,255,255,.05)">
+        <div class="flex gap-2 mb-4 p-1 rounded-xl" style="background:var(--surface-1)">
           <button type="button" (click)="modoCliente.set('existente')"
             class="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
-            [style]="modoCliente() === 'existente' ? 'background:#d4af37;color:#0f0f1a' : 'color:#9ca3af'">
+            [style]="modoCliente() === 'existente' ? 'background:var(--accent);color:var(--bg)' : 'color:var(--text-muted)'">
             Cliente existente
           </button>
           <button type="button" (click)="modoCliente.set('invitado')"
             class="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
-            [style]="modoCliente() === 'invitado' ? 'background:#d4af37;color:#0f0f1a' : 'color:#9ca3af'">
+            [style]="modoCliente() === 'invitado' ? 'background:var(--accent);color:var(--bg)' : 'color:var(--text-muted)'">
             Cliente invitado
           </button>
         </div>
 
         @if (modoCliente() === 'existente') {
           <div class="mb-4 relative">
-            <label for="buscar-cliente" class="block text-sm font-medium text-gray-300 mb-1.5">Buscar cliente</label>
+            <label for="buscar-cliente" class="block text-sm font-medium text-gray-700 mb-1.5">Buscar cliente</label>
             <input id="buscar-cliente" type="text" [ngModel]="busquedaCliente()" (ngModelChange)="onBuscarClienteInput($event)"
               placeholder="Nombre, email o teléfono..."
-              class="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-600 outline-none transition-all"
-              style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)">
+              class="w-full px-4 py-3 rounded-xl text-sm text-gray-900 placeholder-gray-600 outline-none transition-all"
+              style="background:var(--surface-2);border:1px solid var(--border-1)">
 
             @if (clientesEncontrados().length > 0) {
               <div class="absolute z-10 mt-1 w-full rounded-xl overflow-hidden shadow-2xl max-h-48 overflow-y-auto"
-                   style="background:#1f1f30;border:1px solid rgba(255,255,255,.12)">
+                   style="background:var(--bg-alt);border:1px solid var(--border-1)">
                 @for (c of clientesEncontrados(); track c.id) {
                   <button type="button" (click)="seleccionarCliente(c)"
-                    class="w-full text-left px-4 py-2.5 text-sm text-gray-200 hover:bg-white/10 transition-colors">
+                    class="w-full text-left px-4 py-2.5 text-sm text-gray-800 hover:bg-black/10 transition-colors">
                     <span class="font-semibold">{{ c.nombre }} {{ c.apellidos }}</span>
                     <span class="block text-xs text-gray-500">{{ c.email }}</span>
                   </button>
@@ -172,42 +179,42 @@
             }
 
             @if (clienteSeleccionado()) {
-              <p class="mt-1.5 text-xs text-emerald-400">✓ Cliente seleccionado</p>
+              <p class="mt-1.5 text-xs text-emerald-600">✓ Cliente seleccionado</p>
             }
           </div>
         } @else {
           <div class="mb-4 space-y-3">
             <div>
-              <label for="invitado-nombre" class="block text-sm font-medium text-gray-300 mb-1.5">Nombre del cliente</label>
+              <label for="invitado-nombre" class="block text-sm font-medium text-gray-700 mb-1.5">Nombre del cliente</label>
               <input id="invitado-nombre" type="text" [ngModel]="clienteInvitadoNombre()" (ngModelChange)="clienteInvitadoNombre.set($event)"
                 placeholder="Ej. Marta Ruiz"
-                class="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-600 outline-none transition-all"
-                style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)">
+                class="w-full px-4 py-3 rounded-xl text-sm text-gray-900 placeholder-gray-600 outline-none transition-all"
+                style="background:var(--surface-2);border:1px solid var(--border-1)">
             </div>
             <div>
-              <label for="invitado-telefono" class="block text-sm font-medium text-gray-300 mb-1.5">Teléfono (opcional)</label>
+              <label for="invitado-telefono" class="block text-sm font-medium text-gray-700 mb-1.5">Teléfono (opcional)</label>
               <input id="invitado-telefono" type="tel" [ngModel]="clienteInvitadoTelefono()" (ngModelChange)="clienteInvitadoTelefono.set($event)"
                 placeholder="600 000 000"
-                class="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-600 outline-none transition-all"
-                style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)">
+                class="w-full px-4 py-3 rounded-xl text-sm text-gray-900 placeholder-gray-600 outline-none transition-all"
+                style="background:var(--surface-2);border:1px solid var(--border-1)">
             </div>
           </div>
         }
 
         <div class="mb-5">
-          <label for="servicio-select" class="block text-sm font-medium text-gray-300 mb-1.5">Servicio</label>
+          <label for="servicio-select" class="block text-sm font-medium text-gray-700 mb-1.5">Servicio</label>
           <select id="servicio-select" [ngModel]="servicioSeleccionadoId()" (ngModelChange)="servicioSeleccionadoId.set($event)"
-            class="w-full px-4 py-3 rounded-xl text-sm text-white outline-none transition-all"
-            style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)">
+            class="w-full px-4 py-3 rounded-xl text-sm text-gray-900 outline-none transition-all"
+            style="background:var(--surface-2);border:1px solid var(--border-1)">
             @for (s of servicios(); track s.id) {
-              <option [value]="s.id" style="background:#1f1f30">{{ s.nombre }} — {{ s.duracionMin }} min</option>
+              <option [ngValue]="s.id" style="background:var(--bg-alt)">{{ s.nombre }} — {{ s.duracionMin }} min</option>
             }
           </select>
         </div>
 
         <button id="btn-confirmar-reserva" (click)="confirmarReserva()" [disabled]="guardando()"
-          class="w-full py-3 rounded-xl font-semibold text-sm text-gray-900 flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-          style="background:linear-gradient(135deg,#d4af37,#f0c952);box-shadow:0 4px 20px rgba(212,175,55,.35)">
+          class="w-full py-3 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          style="background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 4px 20px var(--accent-border)">
           @if (guardando()) {
             <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
               <circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/>

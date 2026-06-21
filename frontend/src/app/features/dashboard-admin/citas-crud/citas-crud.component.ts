@@ -2,27 +2,28 @@
 
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { CitasService } from '../../../core/services/citas.service';
 import { Cita, EstadoCita } from '../../../core/models/cita.model';
 
 @Component({
   selector: 'app-citas-crud',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <div class="p-8">
       <div class="mb-8">
-        <h2 class="text-3xl font-bold text-white mb-2">Citas y Reservas</h2>
-        <p class="text-gray-400">Control de todas las citas de la peluquería.</p>
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Citas y Reservas</h2>
+        <p class="text-gray-600">Control de todas las citas de la peluquería.</p>
       </div>
 
       <!-- Filtros rápidos (MOCK) -->
       <div class="flex flex-wrap gap-4 mb-8">
-        @for (f of ['TODAS', 'PENDIENTE', 'CONFIRMADA', 'COMPLETADA', 'CANCELADA']; track f) {
+        @for (f of ['TODAS', 'PENDIENTE', 'CONFIRMADA', 'COMPLETADA', 'CANCELADA', 'NO_SHOW']; track f) {
           <button (click)="filtrar(f)"
                   class="px-4 py-2 rounded-xl text-xs font-bold transition-all border"
                   [style]="filtroActual() === f ? estiloFiltroActivo(f) : estiloFiltroInactivo()">
-            {{ f }}
+            {{ etiqueta(f) }}
           </button>
         }
       </div>
@@ -35,68 +36,120 @@ import { Cita, EstadoCita } from '../../../core/models/cita.model';
           <span class="text-lg">Cargando citas...</span>
         </div>
       } @else if (citasFiltradas().length === 0) {
-        <div class="py-20 text-center text-gray-500 bg-white/5 rounded-3xl border border-white/10">
+        <div class="py-20 text-center text-gray-500 bg-gray-50 rounded-xl border border-gray-200">
           No hay citas que coincidan con el filtro.
         </div>
       } @else {
-        <div class="overflow-x-auto rounded-2xl border border-white/10" style="background:rgba(255,255,255,.02)">
+        <div class="overflow-x-auto rounded-xl border border-gray-200 shadow-sm bg-white">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="border-b border-white/10 text-xs font-bold text-gray-500 uppercase tracking-widest">
-                <th class="px-6 py-4">Cliente</th>
-                <th class="px-6 py-4">Servicio</th>
-                <th class="px-6 py-4">Fecha y Hora</th>
-                <th class="px-6 py-4">Estado</th>
-                <th class="px-6 py-4">Acciones</th>
+              <tr class="bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-3.5">Cliente</th>
+                <th class="px-6 py-3.5">Teléfono</th>
+                <th class="px-6 py-3.5">Servicio</th>
+                <th class="px-6 py-3.5">Fecha y Hora</th>
+                <th class="px-6 py-3.5">Estado</th>
+                <th class="px-6 py-3.5">Acciones</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-white/5">
+            <tbody class="divide-y divide-gray-200">
               @for (c of citasFiltradas(); track c.id) {
-                <tr class="text-sm text-gray-300 hover:bg-white/5 transition-colors">
+                <tr class="text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    [class.bg-gray-50]="$even">
                   <td class="px-6 py-4">
-                    <div class="font-bold text-white">{{ c.usuario?.nombre }} {{ c.usuario?.apellidos }}</div>
-                    <div class="text-xs text-gray-500">#{{ c.usuarioId }}</div>
+                    @if (c.usuario) {
+                      <a [routerLink]="['/admin/perfil', c.usuarioId]"
+                         class="font-bold text-gray-900 hover:text-accent hover:underline transition-colors">
+                        {{ c.usuario.nombre }} {{ c.usuario.apellidos }}
+                      </a>
+                      <div class="text-xs text-gray-500">#{{ c.usuarioId }}</div>
+                      @if ((c.clienteNoShows ?? 0) > 2) {
+                        <div class="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold"
+                             style="background:rgba(234,88,12,.15);border:1px solid rgba(234,88,12,.5);color:#c2410c"
+                             [title]="c.clienteNoShows + ' ausencias registradas'">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                          </svg>
+                          Posible absentismo
+                        </div>
+                      }
+                    } @else {
+                      <div class="font-bold text-gray-900">{{ c.clienteInvitadoNombre ?? '—' }}</div>
+                      <div class="text-xs text-gray-500">Invitado</div>
+                    }
                   </td>
                   <td class="px-6 py-4">
-                    <div class="text-white">{{ c.servicio?.nombre }}</div>
-                    <div class="text-xs text-gray-400">con {{ c.empleado?.nombre }}</div>
+                    @if (telefonoCliente(c); as tel) {
+                      <a [href]="'tel:' + tel" class="text-sm font-mono hover:underline" style="color:var(--accent)">{{ tel }}</a>
+                    } @else {
+                      <span class="text-xs text-gray-600">—</span>
+                    }
                   </td>
                   <td class="px-6 py-4">
-                    <div class="text-white">{{ formatearFecha(c.fechaHora) }}</div>
-                    <div class="text-xs font-bold" style="color:#d4af37">{{ formatearHora(c.fechaHora) }}</div>
+                    <div class="text-gray-900">{{ c.servicio?.nombre }}</div>
+                    <div class="text-xs text-gray-600">con {{ c.empleado?.nombre }}</div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-gray-900">{{ formatearFecha(c.fechaHora) }}</div>
+                    <div class="text-xs font-bold" style="color:var(--accent)">{{ formatearHora(c.fechaHora) }}</div>
                   </td>
                   <td class="px-6 py-4">
                     <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter"
                           [style]="estiloBadge(c.estado)">
-                      {{ c.estado }}
+                      {{ etiqueta(c.estado) }}
                     </span>
                   </td>
                   <td class="px-6 py-4">
-                    <div class="flex gap-2">
+                    <div class="flex flex-wrap gap-2">
                       @if (c.estado === 'PENDIENTE') {
                         <button (click)="cambiarEstado(c.id, 'CONFIRMADA')"
-                                class="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all"
-                                title="Confirmar">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                            <polyline points="20 6 9 17 4 12"/>
-                          </svg>
-                        </button>
-                      }
-                      @if (c.estado !== 'CANCELADA' && c.estado !== 'COMPLETADA') {
-                        <button (click)="cambiarEstado(c.id, 'COMPLETADA')"
-                                class="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all"
-                                title="Completar">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                            <polyline points="22 4 12 14.01 9 11.01"/>
-                          </svg>
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all hover:-translate-y-0.5"
+                                style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.45);color:#047857">
+                          Confirmar
                         </button>
                         <button (click)="cambiarEstado(c.id, 'CANCELADA')"
-                                class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
-                                title="Cancelar">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                          </svg>
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all hover:-translate-y-0.5"
+                                style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.45);color:#b91c1c">
+                          Cancelar
+                        </button>
+                      }
+                      @if (c.estado === 'CONFIRMADA') {
+                        <button (click)="cambiarEstado(c.id, 'COMPLETADA')"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all hover:-translate-y-0.5"
+                                style="background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.45);color:#1d4ed8">
+                          Completada
+                        </button>
+                        <button (click)="cambiarEstado(c.id, 'CANCELADA')"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all hover:-translate-y-0.5"
+                                style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.45);color:#b91c1c">
+                          Cancelar
+                        </button>
+                        <button (click)="cambiarEstado(c.id, 'PENDIENTE')"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all hover:-translate-y-0.5"
+                                style="background:rgba(107,114,128,.12);border-color:rgba(107,114,128,.45);color:var(--text-secondary)">
+                          ← Revertir
+                        </button>
+                      }
+                      @if (c.estado === 'COMPLETADA') {
+                        <button (click)="cambiarEstado(c.id, 'CONFIRMADA')"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all hover:-translate-y-0.5"
+                                style="background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.45);color:#b45309">
+                          ← Revertir
+                        </button>
+                      }
+                      @if (c.estado === 'PENDIENTE' || c.estado === 'CONFIRMADA') {
+                        <button (click)="cambiarEstado(c.id, 'NO_SHOW')"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all hover:-translate-y-0.5"
+                                style="background:rgba(234,88,12,.12);border-color:rgba(234,88,12,.45);color:#c2410c">
+                          Absentismo
+                        </button>
+                      }
+                      @if (c.estado === 'CANCELADA' || c.estado === 'NO_SHOW') {
+                        <button (click)="cambiarEstado(c.id, 'PENDIENTE')"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all hover:-translate-y-0.5"
+                                style="background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.45);color:#b45309">
+                          ← Revertir
                         </button>
                       }
                     </div>
@@ -155,35 +208,57 @@ export class CitasCrudComponent implements OnInit {
     });
   }
 
+  telefonoCliente(c: Cita): string | null {
+    return c.usuario?.telefono ?? c.clienteInvitadoTelefono ?? null;
+  }
+
+  // Las horas se guardan como hora "de reloj" del salón en UTC; se muestran en
+  // esa misma zona para que coincida la hora reservada con la mostrada.
   formatearFecha(iso: string): string {
-    return new Date(iso).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+    return new Date(iso).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', timeZone: 'UTC' });
   }
 
   formatearHora(iso: string): string {
-    return new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    return new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
   }
 
+  /** Etiqueta legible de cada estado/filtro (NO_SHOW → «Absentismo»). */
+  private readonly ESTADO_LABEL: Record<string, string> = {
+    TODAS:      'Todas',
+    PENDIENTE:  'Pendiente',
+    CONFIRMADA: 'Confirmada',
+    COMPLETADA: 'Completada',
+    CANCELADA:  'Cancelada',
+    NO_SHOW:    'Absentismo',
+  };
+
+  etiqueta(key: string): string {
+    return this.ESTADO_LABEL[key] ?? key;
+  }
+
+  // Tonos oscuros (familia -700) para máximo contraste sobre fondo blanco.
   colorEstado(estado: string): string {
     switch (estado) {
-      case 'PENDIENTE': return '#f59e0b';
-      case 'CONFIRMADA': return '#10b981';
-      case 'CANCELADA': return '#ef4444';
-      case 'COMPLETADA': return '#3b82f6';
-      default: return '#6b7280';
+      case 'PENDIENTE':  return '#b45309'; // amber-700
+      case 'CONFIRMADA': return '#047857'; // emerald-700
+      case 'CANCELADA':  return '#b91c1c'; // red-700
+      case 'COMPLETADA': return '#1d4ed8'; // blue-700
+      case 'NO_SHOW':    return '#c2410c'; // orange-700
+      default:           return 'var(--text-secondary)';
     }
   }
 
   estiloBadge(estado: string): string {
     const color = this.colorEstado(estado);
-    return `background: ${color}15; border: 1px solid ${color}30; color: ${color};`;
+    return `background: ${color}1f; border: 1px solid ${color}66; color: ${color};`;
   }
 
   estiloFiltroActivo(f: string): string {
-    const color = f === 'TODAS' ? '#d4af37' : this.colorEstado(f);
-    return `background: ${color}20; color: ${color}; border-color: ${color}50; box-shadow: 0 0 15px ${color}10`;
+    const color = f === 'TODAS' ? 'var(--accent)' : this.colorEstado(f);
+    return `background: ${color}1f; color: ${color}; border-color: ${color}80; box-shadow: 0 2px 10px ${color}1a`;
   }
 
   estiloFiltroInactivo(): string {
-    return `background: transparent; color: #4b5563; border-color: rgba(255,255,255,0.05)`;
+    return `background: var(--surface-1); color: var(--text-secondary); border-color: var(--border-1)`;
   }
 }

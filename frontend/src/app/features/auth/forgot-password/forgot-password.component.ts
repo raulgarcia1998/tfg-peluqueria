@@ -22,12 +22,14 @@ export class ForgotPasswordComponent {
 
   loading  = signal(false);
   errorMsg = signal('');
+  infoMsg  = signal('');
   enviado  = signal(false);
 
   onSubmit(): void {
     if (this.form.invalid) return;
     this.loading.set(true);
     this.errorMsg.set('');
+    this.infoMsg.set('');
 
     this.auth.forgotPassword(this.form.value.email).subscribe({
       next: () => {
@@ -36,7 +38,11 @@ export class ForgotPasswordComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        this.errorMsg.set(err?.error?.message ?? 'No se ha podido procesar la solicitud. Inténtalo de nuevo.');
+        if (err?.status === 404) {
+          this.infoMsg.set(err?.error?.message ?? 'No hay ninguna cuenta con ese email.');
+        } else {
+          this.errorMsg.set(err?.error?.message ?? 'No se ha podido procesar la solicitud. Inténtalo de nuevo.');
+        }
       }
     });
   }

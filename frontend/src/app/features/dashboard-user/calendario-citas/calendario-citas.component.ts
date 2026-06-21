@@ -1,7 +1,7 @@
 // CC-BY-SA 4.0 — TFG Peluquería
 // Usuario: calendario mensual de disponibilidad + reserva de citas
 
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -37,8 +37,11 @@ export class CalendarioCitasComponent implements OnInit {
   isLoggedIn = this.authSvc.isAuthenticated;
   isAdmin    = this.authSvc.isAdmin;
 
+  @ViewChild('serviciosSection') serviciosSection?: ElementRef<HTMLElement>;
+
   servicios = signal<Servicio[]>([]);
   serviciosSeleccionados = signal<Servicio[]>([]);
+  resaltarServicios = signal(false);
 
   duracionTotal = computed(() => 
     this.serviciosSeleccionados().reduce((acc, s) => acc + s.duracionMin, 0)
@@ -130,9 +133,10 @@ export class CalendarioCitasComponent implements OnInit {
   toggleServicio(s: Servicio): void {
     const seleccionados = this.serviciosSeleccionados();
     const index = seleccionados.findIndex(serv => serv.id === s.id);
-    
+
     if (index === -1) {
       this.serviciosSeleccionados.set([...seleccionados, s]);
+      this.resaltarServicios.set(false); // ya hay servicio: oculta el aviso
     } else {
       this.serviciosSeleccionados.set(seleccionados.filter(serv => serv.id !== s.id));
     }
@@ -167,11 +171,29 @@ export class CalendarioCitasComponent implements OnInit {
 
   seleccionarDia(c: CeldaDia): void {
     if (!c.esMesActual || !c.estado || c.estado === 'cerrado' || this.esPasado(c.fecha)) return;
+    // Sin servicio elegido no se puede reservar: sube la "cámara" a los servicios
+    if (this.serviciosSeleccionados().length === 0) {
+      this.irAServicios();
+      return;
+    }
     this.diaModal.set(c.fecha);
     this.slotSeleccionado.set(null);
     this.slots.set([]);
     this.bloques.set([]);
     this.cargarSlots(c.fecha);
+  }
+
+  /** Desplaza la vista hasta la sección de servicios, la resalta y muestra el aviso */
+  irAServicios(): void {
+    this.serviciosSection?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    this.resaltarServicios.set(true);
+    setTimeout(() => this.resaltarServicios.set(false), 4000);
+  }
+
+  /** Desde el aviso del modal: cierra y lleva al usuario a elegir servicio */
+  elegirServicio(): void {
+    this.diaModal.set(null);
+    setTimeout(() => this.irAServicios(), 80);
   }
 
   cargarSlots(fecha: string): void {
@@ -223,6 +245,9 @@ export class CalendarioCitasComponent implements OnInit {
         setTimeout(() => {
           this.slotSeleccionado.set(null);
           this.diaModal.set(null);
+          // Limpia la selección para evitar confusiones en la siguiente reserva
+          this.serviciosSeleccionados.set([]);
+          this.notasReserva = '';
           this.cargarMes();
         }, 2000);
       },
@@ -245,33 +270,33 @@ export class CalendarioCitasComponent implements OnInit {
   }
 
   colorEstado(e: EstadoDia, small = false): string {
-    if (e === 'disponible') return '#10b981';
+    if (e === 'disponible') return '#34d399';
     if (e === 'parcial')    return '#f59e0b';
-    if (e === 'lleno')      return '#ef4444';
-    return '#6b7280';
+    if (e === 'lleno')      return '#f87171';
+    return 'var(--text-faint)';
   }
 
   estilocelda(c: CeldaDia): string {
     const sel = this.diaModal() === c.fecha;
     if (!c.esMesActual)
-      return 'background:rgba(255,255,255,.02);border:1px solid transparent;cursor:default;opacity:.2';
+      return 'background:var(--surface-1);border:1px solid transparent;cursor:default;opacity:.2';
     if (this.esPasado(c.fecha) || !c.estado || c.estado === 'cerrado')
-      return 'background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:#4b5563;cursor:default';
+      return 'background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.35);color:var(--text-faint);cursor:default';
 
-    if (sel) return 'background:#d4af37;border:1px solid #f0c952;color:#1a1a1a';
+    if (sel) return 'background:var(--accent);border:1px solid var(--accent-2);color:var(--bg-alt)';
 
     if (c.estado === 'disponible')
-      return 'background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.4);color:#fff';
+      return 'background:rgba(16,185,129,.22);border:1px solid rgba(16,185,129,.65);color:#6ee7b7';
     if (c.estado === 'parcial')
-      return 'background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:#fff';
+      return 'background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.5);color:var(--accent-2)';
     if (c.estado === 'lleno')
-      return 'background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:#9ca3af;cursor:default';
-    return 'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#9ca3af';
+      return 'background:rgba(239,68,68,.20);border:1px solid rgba(239,68,68,.55);color:#f87171;cursor:default';
+    return 'background:var(--surface-1);border:1px solid var(--surface-2);color:var(--text-muted)';
   }
 
   estiloSlot(s: SlotHorario): string {
     if (!s.disponible)
-      return 'background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#9ca3af;cursor:default';
+      return 'background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:var(--text-muted);cursor:default';
     return 'background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.45);color:#10b981;cursor:pointer';
   }
 }

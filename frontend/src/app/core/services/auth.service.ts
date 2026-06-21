@@ -81,6 +81,11 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  /** Actualiza en memoria los datos del usuario en sesión (tras editar su perfil) */
+  updateCurrentUser(user: User): void {
+    this._currentUser.set(user);
+  }
+
   /** Devuelve el token JWT almacenado */
   getToken(): string | null {
     return localStorage.getItem(this.TOKEN_KEY);

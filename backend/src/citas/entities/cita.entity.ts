@@ -6,7 +6,7 @@ import {
   ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn
 } from 'typeorm';
 
-export type EstadoCita = 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA';
+export type EstadoCita = 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA' | 'NO_SHOW';
 
 @Entity('citas')
 export class Cita {
@@ -48,7 +48,7 @@ export class Cita {
 
   @Column({
     type: 'enum',
-    enum: ['PENDIENTE', 'CONFIRMADA', 'CANCELADA', 'COMPLETADA'],
+    enum: ['PENDIENTE', 'CONFIRMADA', 'CANCELADA', 'COMPLETADA', 'NO_SHOW'],
     default: 'PENDIENTE'
   })
   estado!: EstadoCita;

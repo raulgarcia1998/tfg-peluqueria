@@ -4,7 +4,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Cita, CitaFilter, CreateCitaDto, EstadoCita } from '../models/cita.model';
+import { Cita, CitaFilter, CreateCitaDto, EstadoCita, EstadisticasEmpleado } from '../models/cita.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -45,5 +45,21 @@ export class CitasService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.API}/${id}`);
+  }
+
+  /** Admin/Empleado: número de ausencias (NO_SHOW) de un cliente */
+  contarNoShows(usuarioId: number): Observable<{ noShows: number }> {
+    return this.http.get<{ noShows: number }>(`${this.API}/usuario/${usuarioId}/no-shows`);
+  }
+
+  /** Admin/Empleado: historial completo de citas de un cliente */
+  getCitasDeUsuario(usuarioId: number): Observable<Cita[]> {
+    return this.http.get<Cita[]>(`${this.API}/usuario/${usuarioId}`);
+  }
+
+  /** Admin/Empleado: estadísticas de productividad de un empleado en un rango */
+  getEstadisticasEmpleado(empleadoId: number, desde: string, hasta: string): Observable<EstadisticasEmpleado> {
+    const params = new HttpParams().set('desde', desde).set('hasta', hasta);
+    return this.http.get<EstadisticasEmpleado>(`${this.API}/empleado/${empleadoId}/estadisticas`, { params });
   }
 }

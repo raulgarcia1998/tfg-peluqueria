@@ -20,12 +20,29 @@ interface CalendarioDia {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen" style="background:#0f0f1a">
+    <div class="min-h-screen" style="background:var(--bg)">
 
       <!-- Header -->
-      <div class="px-6 py-6 border-b" style="border-color:rgba(255,255,255,.08)">
-        <h2 class="text-2xl font-bold text-white">Gestión de Horarios</h2>
-        <p class="text-gray-400 text-sm mt-1">Define tu jornada laboral con bloques y descansos</p>
+      <div class="px-6 py-6 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+           style="border-color:var(--surface-2)">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900">Gestión de Horarios</h2>
+          <p class="text-gray-600 text-sm mt-1">Define tu jornada laboral con bloques y descansos</p>
+        </div>
+
+        <!-- Selector de modo: un día / varios días -->
+        <div class="flex gap-1 p-1 rounded-xl self-start" style="background:var(--surface-1)">
+          <button (click)="activarModoMultiple(false)"
+            class="px-4 py-2 rounded-lg text-xs font-bold transition-all"
+            [style]="!modoMultiple() ? 'background:var(--accent);color:var(--bg)' : 'color:var(--text-muted)'">
+            Un día
+          </button>
+          <button (click)="activarModoMultiple(true)"
+            class="px-4 py-2 rounded-lg text-xs font-bold transition-all"
+            [style]="modoMultiple() ? 'background:var(--accent);color:var(--bg)' : 'color:var(--text-muted)'">
+            Varios días
+          </button>
+        </div>
       </div>
 
       <div class="flex flex-col lg:flex-row gap-0 h-full">
@@ -36,17 +53,17 @@ interface CalendarioDia {
           <!-- Navegación de mes -->
           <div class="flex items-center justify-between mb-6">
             <button (click)="cambiarMes(-1)"
-              class="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium text-gray-300 transition-all hover:-translate-x-0.5"
-              style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)">
+              class="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium text-gray-700 transition-all hover:-translate-x-0.5"
+              style="background:var(--surface-2);border:1px solid var(--border-1)">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="15 18 9 12 15 6"/>
               </svg>
               Anterior
             </button>
-            <h3 class="text-xl font-bold text-white capitalize">{{ tituloMes() }}</h3>
+            <h3 class="text-xl font-bold text-gray-900 capitalize">{{ tituloMes() }}</h3>
             <button (click)="cambiarMes(1)"
-              class="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium text-gray-300 transition-all hover:translate-x-0.5"
-              style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)">
+              class="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium text-gray-700 transition-all hover:translate-x-0.5"
+              style="background:var(--surface-2);border:1px solid var(--border-1)">
               Siguiente
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6"/>
@@ -54,11 +71,39 @@ interface CalendarioDia {
             </button>
           </div>
 
+          <!-- Acciones rápidas de selección (solo en modo varios días) -->
+          @if (modoMultiple()) {
+            <div class="flex flex-wrap items-center gap-2 mb-4 p-3 rounded-xl"
+                 style="background:var(--accent-soft);border:1px solid var(--accent-soft)">
+              <span class="text-xs font-semibold text-gray-700 mr-1">Selección rápida:</span>
+              <button (click)="seleccionarTodoElMes()"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105"
+                style="background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">
+                Todo el mes
+              </button>
+              <button (click)="seleccionarLaborables()"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105"
+                style="background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">
+                Días laborables (L–V)
+              </button>
+              @if (diasSeleccionados().size > 0) {
+                <button (click)="limpiarSeleccion()"
+                  class="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 transition-all hover:text-gray-900"
+                  style="background:var(--surface-1);border:1px solid var(--border-1)">
+                  Limpiar
+                </button>
+                <span class="ml-auto text-xs font-bold" style="color:var(--accent)">
+                  {{ diasSeleccionados().size }} día(s) seleccionado(s)
+                </span>
+              }
+            </div>
+          }
+
           <!-- Encabezados semana -->
           <div class="grid grid-cols-7 mb-2">
             @for (d of ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']; track d) {
               <div class="text-center text-xs font-semibold py-2"
-                   [style.color]="d === 'Dom' ? '#ef4444' : '#6b7280'">{{ d }}</div>
+                   [style.color]="d === 'Dom' ? '#ef4444' : 'var(--text-faint)'">{{ d }}</div>
             }
           </div>
 
@@ -66,15 +111,15 @@ interface CalendarioDia {
           <div class="grid grid-cols-7 gap-1.5">
             @for (celda of celdasCalendario(); track celda.fecha) {
               <button
-                (click)="seleccionarDia(celda)"
+                (click)="onClickCelda(celda)"
                 [disabled]="!celda.esMesActual"
                 class="aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-medium transition-all duration-200 relative overflow-hidden"
                 [class.opacity-20]="!celda.esMesActual"
                 [class.cursor-default]="!celda.esMesActual"
                 [style]="estilocelda(celda)">
 
-                <span [class.text-gray-900]="diaSeleccionado()?.fecha === celda.fecha && celda.horario"
-                      [class.text-white]="diaSeleccionado()?.fecha !== celda.fecha || !celda.horario"
+                <span [class.text-white]="celdaSeleccionadaVisual(celda)"
+                      [class.text-gray-900]="!celdaSeleccionadaVisual(celda)"
                       class="font-bold">
                   {{ celda.dia }}
                 </span>
@@ -82,15 +127,15 @@ interface CalendarioDia {
                 <!-- Indicador de franjas -->
                 @if (celda.horario && celda.esMesActual) {
                   <span class="text-[9px] mt-0.5 font-semibold leading-tight text-center px-1"
-                        [class.text-gray-900]="diaSeleccionado()?.fecha === celda.fecha"
-                        [class.text-emerald-400]="diaSeleccionado()?.fecha !== celda.fecha">
+                        [class.text-white]="celdaSeleccionadaVisual(celda)"
+                        [class.text-emerald-700]="!celdaSeleccionadaVisual(celda)">
                     {{ etiquetaCelda(celda.horario) }}
                   </span>
                 }
 
                 <!-- Punto "hoy" -->
                 @if (celda.esHoy) {
-                  <span class="absolute bottom-1.5 w-1.5 h-1.5 rounded-full" style="background:#d4af37"></span>
+                  <span class="absolute bottom-1.5 w-1.5 h-1.5 rounded-full" style="background:var(--accent)"></span>
                 }
               </button>
             }
@@ -107,11 +152,11 @@ interface CalendarioDia {
               Día seleccionado
             </span>
             <span class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)"></span>
+              <span class="w-3 h-3 rounded" style="background:var(--surface-2);border:1px solid var(--border-1)"></span>
               Sin horario
             </span>
             <span class="flex items-center gap-1.5">
-              <span class="w-1.5 h-1.5 rounded-full inline-block" style="background:#d4af37"></span>
+              <span class="w-1.5 h-1.5 rounded-full inline-block" style="background:var(--accent)"></span>
               Hoy
             </span>
           </div>
@@ -119,21 +164,66 @@ interface CalendarioDia {
 
         <!-- ── Panel lateral: edición del día ──────────── -->
         <div class="w-full lg:w-[420px] border-t lg:border-t-0 lg:border-l p-6 flex flex-col gap-6"
-             style="background:rgba(255,255,255,.02);border-color:rgba(255,255,255,.08)">
+             style="background:var(--surface-1);border-color:var(--surface-2)">
 
-          @if (!diaSeleccionado()) {
+          @if (modoMultiple()) {
+            <!-- ── Panel: aplicar a varios días ── -->
+            <div>
+              <h3 class="text-lg font-bold text-gray-900">Aplicar a varios días</h3>
+              @if (diasSeleccionados().size > 0) {
+                <p class="text-gray-600 text-sm mt-1">
+                  Se aplicará el mismo horario a
+                  <span class="font-bold" style="color:var(--accent)">{{ diasSeleccionados().size }}</span> día(s).
+                  Sobrescribe los que ya tuvieran horario.
+                </p>
+              } @else {
+                <p class="text-gray-600 text-sm mt-1">
+                  Marca días en el calendario o usa la <span class="text-accent">selección rápida</span>.
+                </p>
+              }
+            </div>
+
+            <ng-container *ngTemplateOutlet="editorHorario"></ng-container>
+
+            <button (click)="guardarMultiple()"
+              [disabled]="guardando() || diasSeleccionados().size === 0"
+              class="w-full py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              style="background:linear-gradient(135deg,var(--accent),var(--accent-2))">
+              @if (guardando()) {
+                <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/>
+                </svg>
+              } @else {
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              }
+              Aplicar a {{ diasSeleccionados().size }} día(s)
+            </button>
+
+            @if (toastOk()) {
+              <div class="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-emerald-600"
+                   style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                ¡Horario aplicado correctamente!
+              </div>
+            }
+
+          } @else if (!diaSeleccionado()) {
             <!-- Estado vacío -->
             <div class="flex flex-col items-center justify-center h-64 text-center">
               <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-                   style="background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.2)">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5">
+                   style="background:var(--accent-soft);border:1px solid var(--accent-soft-2)">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5">
                   <rect x="3" y="4" width="18" height="18" rx="2"/>
                   <line x1="16" y1="2" x2="16" y2="6"/>
                   <line x1="8" y1="2" x2="8" y2="6"/>
                   <line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
               </div>
-              <p class="text-gray-300 font-medium">Selecciona un día</p>
+              <p class="text-gray-700 font-medium">Selecciona un día</p>
               <p class="text-gray-500 text-sm mt-1">Haz clic en cualquier día del calendario para configurar su horario</p>
             </div>
 
@@ -141,142 +231,33 @@ interface CalendarioDia {
             <!-- Encabezado panel -->
             <div class="flex items-center justify-between">
               <div>
-                <h3 class="text-lg font-bold text-white capitalize">{{ fechaFormateada() }}</h3>
+                <h3 class="text-lg font-bold text-gray-900 capitalize">{{ fechaFormateada() }}</h3>
                 @if (diaSeleccionado()?.horario) {
                   <span class="text-xs font-medium px-2 py-0.5 rounded-full"
                         style="background:rgba(16,185,129,.2);color:#10b981">● Configurado</span>
                 } @else {
                   <span class="text-xs font-medium px-2 py-0.5 rounded-full"
-                        style="background:rgba(107,114,128,.2);color:#9ca3af">Sin horario</span>
+                        style="background:rgba(107,114,128,.2);color:var(--text-muted)">Sin horario</span>
                 }
               </div>
               <button (click)="diaSeleccionado.set(null)"
-                class="p-2 rounded-lg text-gray-400 hover:text-white transition-colors"
-                style="background:rgba(255,255,255,.05)">
+                class="p-2 rounded-lg text-gray-600 hover:text-gray-900 transition-colors"
+                style="background:var(--surface-1)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
               </button>
             </div>
 
-            <!-- Paso de cita -->
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-1.5">
-                <svg class="inline w-4 h-4 mr-1 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5">
-                  <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
-                  <line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/>
-                </svg>
-                Paso entre citas (min)
-              </label>
-              <div class="flex items-center gap-3">
-                <input id="duracion-corte" type="number" [(ngModel)]="formDuracion"
-                  min="5" max="120" step="5"
-                  class="flex-1 px-4 py-3 rounded-xl text-white text-sm outline-none"
-                  style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)">
-                <span class="text-gray-400 text-sm whitespace-nowrap">min</span>
-              </div>
-              @if (slotsCalculados() > 0) {
-                <p class="mt-1.5 text-xs text-gray-500">
-                  → <span class="text-emerald-400 font-semibold">{{ slotsCalculados() }}</span> citas disponibles ese día
-                </p>
-              }
-            </div>
-
-            <!-- ── Franjas horarias ── -->
-            <div class="space-y-3">
-              <div class="flex items-center justify-between">
-                <label class="text-sm font-medium text-gray-300">
-                  <svg class="inline w-4 h-4 mr-1 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  Bloques horarios
-                </label>
-                <button (click)="anadirFranja()"
-                  class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105"
-                  style="background:rgba(212,175,55,.15);color:#d4af37;border:1px solid rgba(212,175,55,.3)">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                  </svg>
-                  Añadir bloque
-                </button>
-              </div>
-
-              @if (formFranjas.length === 0) {
-                <div class="py-6 rounded-xl text-center text-gray-500 text-sm"
-                     style="border:1px dashed rgba(255,255,255,.1)">
-                  Sin bloques — haz clic en «Añadir bloque»
-                </div>
-              }
-
-              @for (franja of formFranjas; track $index) {
-                <div class="p-4 rounded-xl space-y-3 relative"
-                     style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)">
-
-                  <!-- Etiqueta bloque -->
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold uppercase tracking-widest"
-                          style="color:#d4af37">Bloque {{ $index + 1 }}</span>
-                    @if (formFranjas.length > 1) {
-                      <button (click)="eliminarFranja($index)"
-                        class="p-1 rounded-lg text-gray-500 hover:text-red-400 transition-colors"
-                        style="background:rgba(239,68,68,.08)">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
-                      </button>
-                    }
-                  </div>
-
-                  <!-- Inputs inicio / fin -->
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-[10px] font-semibold text-gray-500 mb-1 uppercase tracking-wider">Inicio</label>
-                      <input type="time" [(ngModel)]="franja.horaInicio"
-                        class="w-full px-3 py-2.5 rounded-lg text-white text-sm outline-none"
-                        style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)">
-                    </div>
-                    <div>
-                      <label class="block text-[10px] font-semibold text-gray-500 mb-1 uppercase tracking-wider">Fin</label>
-                      <input type="time" [(ngModel)]="franja.horaFin"
-                        class="w-full px-3 py-2.5 rounded-lg text-white text-sm outline-none"
-                        style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)">
-                    </div>
-                  </div>
-
-                  <!-- Resumen mini del bloque -->
-                  @if (franja.horaInicio && franja.horaFin && franja.horaInicio < franja.horaFin) {
-                    <p class="text-[10px] text-gray-500">
-                      {{ minutosFranja(franja) }} min
-                      · <span class="text-emerald-400">{{ slotsFranja(franja) }} citas</span>
-                    </p>
-                  }
-                </div>
-              }
-
-              @if (formFranjas.length >= 2) {
-                <!-- Resumen de descansos -->
-                <div class="px-3 py-2 rounded-lg text-xs text-gray-500"
-                     style="background:rgba(212,175,55,.05);border:1px solid rgba(212,175,55,.1)">
-                  <span class="text-[#d4af37] font-bold">Descansos:</span>
-                  @for (desc of resumenDescansos(); track $index) {
-                    <span class="ml-2">{{ desc }}</span>
-                  }
-                </div>
-              }
-            </div>
-
-            <!-- Error -->
-            @if (errorForm()) {
-              <p class="text-xs text-red-400 px-3 py-2 rounded-lg"
-                 style="background:rgba(239,68,68,.1)">{{ errorForm() }}</p>
-            }
+            <!-- Editor de paso + franjas + error (compartido con el modo múltiple) -->
+            <ng-container *ngTemplateOutlet="editorHorario"></ng-container>
 
             <!-- Acciones -->
             <div class="flex gap-3">
               <button id="btn-guardar-horario" (click)="guardar()"
                 [disabled]="guardando()"
-                class="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-900 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 disabled:opacity-50"
-                style="background:linear-gradient(135deg,#d4af37,#f0c952)">
+                class="flex-1 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 disabled:opacity-50"
+                style="background:linear-gradient(135deg,var(--accent),var(--accent-2))">
                 @if (guardando()) {
                   <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/>
@@ -292,7 +273,7 @@ interface CalendarioDia {
               @if (diaSeleccionado()?.horario?.id) {
                 <button id="btn-eliminar-horario" (click)="eliminar()"
                   [disabled]="guardando()"
-                  class="px-4 py-3 rounded-xl text-sm font-semibold text-red-400 transition-all hover:text-red-300 disabled:opacity-50"
+                  class="px-4 py-3 rounded-xl text-sm font-semibold text-red-600 transition-all hover:text-red-600 disabled:opacity-50"
                   style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2)">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3 6 5 6 21 6"/>
@@ -305,7 +286,7 @@ interface CalendarioDia {
 
             <!-- Toast éxito -->
             @if (toastOk()) {
-              <div class="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-emerald-300"
+              <div class="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-emerald-600"
                    style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3)">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <polyline points="20 6 9 17 4 12"/>
@@ -316,6 +297,118 @@ interface CalendarioDia {
           }
         </div>
       </div>
+
+      <!-- ── Editor reutilizable: tiempo de transición + bloques + error ── -->
+      <ng-template #editorHorario>
+        <!-- Tiempo de transición entre citas -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            <svg class="inline w-4 h-4 mr-1 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Tiempo de transición entre citas (min)
+          </label>
+          <div class="flex items-center gap-3">
+            <input id="tiempo-transicion" type="number" [(ngModel)]="formTransicion"
+              min="0" max="30" step="5"
+              class="flex-1 px-4 py-3 rounded-xl text-gray-900 text-sm outline-none"
+              style="background:var(--surface-2);border:1px solid var(--border-1)">
+            <span class="text-gray-600 text-sm whitespace-nowrap">min</span>
+          </div>
+          <p class="mt-1.5 text-xs text-gray-500">
+            Hueco reservado tras cada cita para limpiar, preparar y descansar.
+            La duración de cada cita la define su servicio.
+          </p>
+        </div>
+
+        <!-- ── Franjas horarias ── -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700">
+              <svg class="inline w-4 h-4 mr-1 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              Bloques horarios
+            </label>
+            <button (click)="anadirFranja()"
+              class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105"
+              style="background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Añadir bloque
+            </button>
+          </div>
+
+          @if (formFranjas.length === 0) {
+            <div class="py-6 rounded-xl text-center text-gray-500 text-sm"
+                 style="border:1px dashed var(--border-1)">
+              Sin bloques — haz clic en «Añadir bloque»
+            </div>
+          }
+
+          @for (franja of formFranjas; track $index) {
+            <div class="p-4 rounded-xl space-y-3 relative"
+                 style="background:var(--surface-1);border:1px solid var(--border-1)">
+
+              <!-- Etiqueta bloque -->
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-widest"
+                      style="color:var(--accent)">Bloque {{ $index + 1 }}</span>
+                @if (formFranjas.length > 1) {
+                  <button (click)="eliminarFranja($index)"
+                    class="p-1 rounded-lg text-gray-500 hover:text-red-600 transition-colors"
+                    style="background:rgba(239,68,68,.08)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                }
+              </div>
+
+              <!-- Inputs inicio / fin -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-[10px] font-semibold text-gray-500 mb-1 uppercase tracking-wider">Inicio</label>
+                  <input type="time" [(ngModel)]="franja.horaInicio"
+                    class="w-full px-3 py-2.5 rounded-lg text-gray-900 text-sm outline-none"
+                    style="background:var(--surface-2);border:1px solid var(--border-1)">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-semibold text-gray-500 mb-1 uppercase tracking-wider">Fin</label>
+                  <input type="time" [(ngModel)]="franja.horaFin"
+                    class="w-full px-3 py-2.5 rounded-lg text-gray-900 text-sm outline-none"
+                    style="background:var(--surface-2);border:1px solid var(--border-1)">
+                </div>
+              </div>
+
+              <!-- Resumen mini del bloque -->
+              @if (franja.horaInicio && franja.horaFin && franja.horaInicio < franja.horaFin) {
+                <p class="text-[10px] text-gray-500">
+                  <span class="text-emerald-600">{{ minutosFranja(franja) }} min</span> de jornada
+                </p>
+              }
+            </div>
+          }
+
+          @if (formFranjas.length >= 2) {
+            <!-- Resumen de descansos -->
+            <div class="px-3 py-2 rounded-lg text-xs text-gray-500"
+                 style="background:rgba(212,175,55,.05);border:1px solid var(--accent-soft)">
+              <span class="text-accent font-bold">Descansos:</span>
+              @for (desc of resumenDescansos(); track $index) {
+                <span class="ml-2">{{ desc }}</span>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Error -->
+        @if (errorForm()) {
+          <p class="text-xs text-red-600 px-3 py-2 rounded-lg"
+             style="background:rgba(239,68,68,.1)">{{ errorForm() }}</p>
+        }
+      </ng-template>
     </div>
   `
 })
@@ -328,7 +421,12 @@ export class HorarioAdminComponent implements OnInit {
 
   diaSeleccionado = signal<CalendarioDia | null>(null);
 
-  formDuracion = 30;
+  // Modo de configuración múltiple: seleccionar varios días (o el mes completo)
+  // y aplicarles el mismo horario de una sola vez.
+  modoMultiple      = signal(false);
+  diasSeleccionados = signal<Set<string>>(new Set());
+
+  formTransicion = 10;
   formFranjas: { horaInicio: string; horaFin: string }[] = [
     { horaInicio: '09:00', horaFin: '14:00' }
   ];
@@ -349,11 +447,6 @@ export class HorarioAdminComponent implements OnInit {
     if (!d) return '';
     return new Date(d.fecha + 'T00:00:00')
       .toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-  });
-
-  slotsCalculados = computed(() => {
-    if (!this.formFranjas.length || !this.formDuracion) return 0;
-    return this.formFranjas.reduce((acc, f) => acc + this.slotsFranja(f), 0);
   });
 
   resumenDescansos = computed((): string[] => {
@@ -438,7 +531,7 @@ export class HorarioAdminComponent implements OnInit {
     this.toastOk.set(false);
 
     if (celda.horario) {
-      this.formDuracion = celda.horario.duracionCorteMin;
+      this.formTransicion = celda.horario.tiempoTransicionMin ?? 10;
       // Cargar franjas existentes o crear una desde los campos legacy
       if (celda.horario.franjas?.length) {
         this.formFranjas = celda.horario.franjas.map(f => ({
@@ -449,9 +542,103 @@ export class HorarioAdminComponent implements OnInit {
         this.formFranjas = [{ horaInicio: '09:00', horaFin: '19:00' }];
       }
     } else {
-      this.formDuracion = 30;
+      this.formTransicion = 10;
       this.formFranjas  = [{ horaInicio: '09:00', horaFin: '14:00' }];
     }
+  }
+
+  // ── Modo selección múltiple ────────────────────────────────────────────────
+
+  /** Activa o desactiva el modo de configuración de varios días */
+  activarModoMultiple(activar: boolean): void {
+    this.modoMultiple.set(activar);
+    this.diaSeleccionado.set(null);
+    this.diasSeleccionados.set(new Set());
+    this.errorForm.set('');
+    this.toastOk.set(false);
+    if (activar) {
+      // Formulario por defecto que se aplicará a los días elegidos
+      this.formTransicion = 10;
+      this.formFranjas  = [{ horaInicio: '09:00', horaFin: '14:00' }];
+    }
+  }
+
+  /** Punto de entrada del clic en una celda: enruta según el modo activo */
+  onClickCelda(celda: CalendarioDia): void {
+    if (!celda.esMesActual) return;
+    if (this.modoMultiple()) this.toggleDiaSeleccion(celda);
+    else this.seleccionarDia(celda);
+  }
+
+  /** Añade o quita un día del conjunto de seleccionados */
+  toggleDiaSeleccion(celda: CalendarioDia): void {
+    const seleccion = new Set(this.diasSeleccionados());
+    if (seleccion.has(celda.fecha)) seleccion.delete(celda.fecha);
+    else seleccion.add(celda.fecha);
+    this.diasSeleccionados.set(seleccion);
+    this.errorForm.set('');
+  }
+
+  /** Selecciona todos los días del mes mostrado */
+  seleccionarTodoElMes(): void {
+    const fechas = this.celdasCalendario().filter(c => c.esMesActual).map(c => c.fecha);
+    this.diasSeleccionados.set(new Set(fechas));
+  }
+
+  /** Selecciona solo los días laborables (lunes a viernes) del mes */
+  seleccionarLaborables(): void {
+    const fechas = this.celdasCalendario()
+      .filter(c => c.esMesActual)
+      .filter(c => {
+        const diaSemana = new Date(c.fecha + 'T00:00:00').getDay(); // 0=domingo .. 6=sábado
+        return diaSemana >= 1 && diaSemana <= 5;
+      })
+      .map(c => c.fecha);
+    this.diasSeleccionados.set(new Set(fechas));
+  }
+
+  limpiarSeleccion(): void {
+    this.diasSeleccionados.set(new Set());
+  }
+
+  /** ¿Debe pintarse esta celda como seleccionada (texto oscuro sobre dorado)? */
+  celdaSeleccionadaVisual(celda: CalendarioDia): boolean {
+    return this.modoMultiple()
+      ? this.diasSeleccionados().has(celda.fecha)
+      : this.diaSeleccionado()?.fecha === celda.fecha;
+  }
+
+  /** Aplica el horario del formulario a todos los días seleccionados */
+  guardarMultiple(): void {
+    const fechas = [...this.diasSeleccionados()];
+    if (fechas.length === 0) {
+      this.errorForm.set('Selecciona al menos un día en el calendario'); return;
+    }
+
+    const error = this.validarFranjasForm();
+    if (error) { this.errorForm.set(error); return; }
+
+    this.guardando.set(true);
+    this.errorForm.set('');
+
+    this.horarioSvc.guardarVariosDias({
+      fechas,
+      tiempoTransicionMin: this.formTransicion,
+      activo: true,
+      franjas: this.formFranjas.map((f, i) => ({ ...f, orden: i })),
+    }).subscribe({
+      next: () => {
+        this.guardando.set(false);
+        this.toastOk.set(true);
+        setTimeout(() => this.toastOk.set(false), 3000);
+        this.diasSeleccionados.set(new Set());
+        this.cargarMes();
+      },
+      error: () => {
+        this.guardando.set(false);
+        this.errorForm.set('Error al guardar. Inténtalo de nuevo.');
+      }
+    });
   }
 
   anadirFranja(): void {
@@ -468,40 +655,45 @@ export class HorarioAdminComponent implements OnInit {
     this.formFranjas = this.formFranjas.filter((_, i) => i !== idx);
   }
 
-  guardar(): void {
-    const dia = this.diaSeleccionado();
-    if (!dia) return;
-
-    // Validaciones
+  /** Valida el formulario de franjas; devuelve el mensaje de error o null si es válido */
+  private validarFranjasForm(): string | null {
     if (this.formFranjas.length === 0) {
-      this.errorForm.set('Añade al menos un bloque horario'); return;
+      return 'Añade al menos un bloque horario';
     }
     for (const f of this.formFranjas) {
       if (!f.horaInicio || !f.horaFin) {
-        this.errorForm.set('Completa las horas de inicio y fin de todos los bloques'); return;
+        return 'Completa las horas de inicio y fin de todos los bloques';
       }
       if (f.horaInicio >= f.horaFin) {
-        this.errorForm.set('El inicio de cada bloque debe ser anterior al fin'); return;
+        return 'El inicio de cada bloque debe ser anterior al fin';
       }
     }
-    if (this.formDuracion < 5) {
-      this.errorForm.set('El paso mínimo entre citas es 5 minutos'); return;
+    if (this.formTransicion < 0 || this.formTransicion > 30) {
+      return 'El tiempo de transición debe estar entre 0 y 30 minutos';
     }
-
     // Validar que los bloques no se solapan entre sí
     const sorted = [...this.formFranjas].sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
     for (let i = 0; i < sorted.length - 1; i++) {
       if (sorted[i].horaFin > sorted[i + 1].horaInicio) {
-        this.errorForm.set(`El bloque ${i + 1} y el ${i + 2} se solapan`); return;
+        return `El bloque ${i + 1} y el ${i + 2} se solapan`;
       }
     }
+    return null;
+  }
+
+  guardar(): void {
+    const dia = this.diaSeleccionado();
+    if (!dia) return;
+
+    const error = this.validarFranjasForm();
+    if (error) { this.errorForm.set(error); return; }
 
     this.guardando.set(true);
     this.errorForm.set('');
 
     const dto = {
       fecha: dia.fecha,
-      duracionCorteMin: this.formDuracion,
+      tiempoTransicionMin: this.formTransicion,
       activo: true,
       franjas: this.formFranjas.map((f, i) => ({ ...f, orden: i })),
     };
@@ -549,11 +741,6 @@ export class HorarioAdminComponent implements OnInit {
     return this.toMinutes(f.horaFin) - this.toMinutes(f.horaInicio);
   }
 
-  slotsFranja(f: { horaInicio: string; horaFin: string }): number {
-    const mins = this.minutosFranja(f);
-    return mins > 0 && this.formDuracion > 0 ? Math.floor(mins / this.formDuracion) : 0;
-  }
-
   etiquetaCelda(horario: HorarioLaboral): string {
     if (horario.franjas?.length >= 2) {
       return `${horario.franjas[0].horaInicio} · ${horario.franjas.length} bloq.`;
@@ -567,16 +754,29 @@ export class HorarioAdminComponent implements OnInit {
   estilocelda(celda: CalendarioDia): string {
     const sel = this.diaSeleccionado()?.fecha === celda.fecha;
     if (!celda.esMesActual)
-      return 'background:rgba(255,255,255,.02);border:1px solid transparent;cursor:default';
+      return 'background:var(--surface-1);border:1px solid transparent;cursor:default';
+
+    // En modo múltiple, los días elegidos se resaltan en dorado; el resto
+    // conserva su estado (con/sin horario) para saber qué hay configurado.
+    if (this.modoMultiple()) {
+      if (this.diasSeleccionados().has(celda.fecha))
+        return 'background:var(--accent);border:1px solid var(--accent-2);color:var(--bg-alt)';
+      if (celda.horario)
+        return 'background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:var(--text)';
+      if (celda.esHoy)
+        return 'background:var(--accent-soft);border:1px solid var(--accent-border);color:var(--text)';
+      return 'background:var(--surface-1);border:1px solid var(--surface-2);color:var(--text-secondary)';
+    }
+
     if (sel && celda.horario)
-      return 'background:rgba(16,185,129,.85);border:1px solid #10b981;color:#fff';
+      return 'background:rgba(16,185,129,.85);border:1px solid #10b981;color:var(--text)';
     if (sel)
-      return 'background:#d4af37;border:1px solid #f0c952;color:#1a1a1a';
+      return 'background:var(--accent);border:1px solid var(--accent-2);color:var(--bg-alt)';
     if (celda.horario)
-      return 'background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#fff';
+      return 'background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:var(--text)';
     if (celda.esHoy)
-      return 'background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.4);color:#fff';
-    return 'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#d1d5db';
+      return 'background:var(--accent-soft);border:1px solid var(--accent-border);color:var(--text)';
+    return 'background:var(--surface-1);border:1px solid var(--surface-2);color:var(--text-secondary)';
   }
 
   private toMinutes(time: string): number {

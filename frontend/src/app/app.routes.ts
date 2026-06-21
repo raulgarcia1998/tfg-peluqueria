@@ -105,8 +105,37 @@ export const routes: Routes = [
             m => m.EmpleadosCrudComponent
           )
       },
+      {
+        path: 'usuarios',
+        loadComponent: () =>
+          import('./features/dashboard-admin/usuarios-crud/usuarios-crud.component').then(
+            m => m.UsuariosCrudComponent
+          )
+      },
+      {
+        path: 'perfil',
+        loadComponent: () =>
+          import('./features/perfil-usuario/perfil-usuario.component').then(m => m.PerfilUsuarioComponent)
+      },
+      {
+        path: 'perfil/:id',
+        loadComponent: () =>
+          import('./features/perfil-usuario/perfil-usuario.component').then(m => m.PerfilUsuarioComponent)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
+  },
+  {
+    path: 'perfil',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/perfil-usuario/perfil-usuario.component').then(m => m.PerfilUsuarioComponent)
+  },
+  {
+    path: 'perfil/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/perfil-usuario/perfil-usuario.component').then(m => m.PerfilUsuarioComponent)
   },
   {
     path: 'acceso-denegado',

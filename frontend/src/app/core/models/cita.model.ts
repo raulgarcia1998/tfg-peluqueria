@@ -1,6 +1,6 @@
 // CC-BY-SA 4.0 — TFG Peluquería
 
-export type EstadoCita = 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA';
+export type EstadoCita = 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA' | 'NO_SHOW';
 
 export interface Cita {
   id: number;
@@ -11,9 +11,13 @@ export interface Cita {
   estado: EstadoCita;
   notas?: string;
   precioFinal: number;
-  usuario?: { nombre: string; apellidos: string };
+  usuario?: { nombre: string; apellidos: string; telefono?: string };
+  clienteInvitadoNombre?: string;
+  clienteInvitadoTelefono?: string;
   empleado?: { nombre: string; especialidad: string };
   servicio?: { nombre: string; duracionMin: number };
+  /** Nº de ausencias acumuladas del cliente (lo adjunta el backend en el listado de admin) */
+  clienteNoShows?: number;
   createdAt: string;
 }
 
@@ -36,4 +40,18 @@ export interface CitaFilter {
   fechaHasta?: string;
   servicioId?: number;
   search?: string;
+}
+
+export interface TipoCorteStat {
+  categoria: string;
+  cantidad: number;
+  porcentaje: number;
+}
+
+export interface EstadisticasEmpleado {
+  cortesRealizados: number;
+  horasTrabajadas: number;
+  horasHorarioLaboral: number;
+  dineroRecibido: number;
+  porcentajesTipos: TipoCorteStat[];
 }

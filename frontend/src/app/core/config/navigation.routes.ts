@@ -3,7 +3,7 @@
 // Define todas las rutas disponibles con sus labels, iconos y roles requeridos
 
 export type UserRole = 'ADMIN' | 'EMPLEADO' | 'USER' | 'PUBLIC';
-export type IconType = 'home' | 'calendar' | 'clock' | 'star' | 'users' | 'edit' | 'phone';
+export type IconType = 'home' | 'calendar' | 'clock' | 'star' | 'users' | 'edit' | 'phone' | 'user';
 
 export interface NavigationRoute {
   path: string;
@@ -87,6 +87,20 @@ export const ADMIN_ROUTES: NavigationRoute[] = [
     iconType: 'users',
     roles: ['ADMIN'],
     section: 'Negocio'
+  },
+  {
+    path: '/admin/usuarios',
+    label: 'Usuarios',
+    iconType: 'users',
+    roles: ['ADMIN'],
+    section: 'Negocio'
+  },
+  {
+    path: '/admin/perfil',
+    label: 'Mi Perfil',
+    iconType: 'user',
+    roles: ['ADMIN'],
+    section: 'Negocio'
   }
 ];
 
@@ -106,6 +120,12 @@ export const HEADER_ROUTES: NavigationRoute[] = [
     label: 'Mis Citas',
     iconType: 'calendar',
     roles: ['USER', 'ADMIN']
+  },
+  {
+    path: '/perfil',
+    label: 'Mi Perfil',
+    iconType: 'user',
+    roles: ['USER']
   },
   {
     path: '/admin/dashboard',

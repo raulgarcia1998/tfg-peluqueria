@@ -34,9 +34,43 @@ export class CreateHorarioDto {
   @IsNotEmpty()
   fecha!: string;
 
+  /** @deprecated Sustituido por tiempoTransicionMin. Se acepta por compatibilidad. */
   @IsOptional()
   @IsInt()
   duracionCorteMin?: number;
+
+  /** Buffer en minutos reservado después de cada cita (limpieza/preparación). */
+  @IsOptional()
+  @IsInt()
+  tiempoTransicionMin?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  activo?: boolean;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => FranjaDto)
+  franjas!: FranjaDto[];
+}
+
+/** Aplica un mismo horario (mismas franjas y paso) a varias fechas de golpe */
+export class BulkHorarioDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  fechas!: string[];
+
+  /** @deprecated Sustituido por tiempoTransicionMin. Se acepta por compatibilidad. */
+  @IsOptional()
+  @IsInt()
+  duracionCorteMin?: number;
+
+  /** Buffer en minutos reservado después de cada cita (limpieza/preparación). */
+  @IsOptional()
+  @IsInt()
+  tiempoTransicionMin?: number;
 
   @IsOptional()
   @IsBoolean()
@@ -81,7 +115,8 @@ export class HorariosService {
 
     const horario = this.repo.create({
       fecha: dto.fecha,
-      duracionCorteMin: dto.duracionCorteMin ?? 30,
+      duracionCorteMin: dto.duracionCorteMin ?? 30, // legacy
+      tiempoTransicionMin: dto.tiempoTransicionMin ?? 10,
       activo: dto.activo ?? true,
       // Legacy: primer y último bloque para compatibilidad
       horaInicio: franjas[0]?.horaInicio,
@@ -89,6 +124,38 @@ export class HorariosService {
       franjas,
     });
     return this.repo.save(horario);
+  }
+
+  /**
+   * Admin: aplica el mismo horario a varias fechas. Para cada fecha, si ya
+   * existe un horario lo actualiza (reemplazando sus franjas); si no, lo crea.
+   * Permite configurar de una vez varios días o el mes completo.
+   */
+  async upsertMany(dto: BulkHorarioDto): Promise<HorarioLaboral[]> {
+    this.validarFranjas(dto.franjas ?? []);
+
+    const fechasUnicas = [...new Set(dto.fechas)];
+    const resultado: HorarioLaboral[] = [];
+
+    for (const fecha of fechasUnicas) {
+      const datosDia: CreateHorarioDto = {
+        fecha,
+        duracionCorteMin: dto.duracionCorteMin,
+        tiempoTransicionMin: dto.tiempoTransicionMin,
+        activo: dto.activo,
+        franjas: dto.franjas,
+      };
+
+      const existente = await this.repo.findOne({ where: { fecha }, relations: ['franjas'] });
+      if (existente) {
+        const actualizado = await this.update(existente.id, datosDia);
+        if (actualizado) resultado.push(actualizado);
+      } else {
+        resultado.push(await this.create(datosDia));
+      }
+    }
+
+    return resultado;
   }
 
   /** Admin: actualizar horario — reemplaza franjas completamente */
@@ -112,6 +179,7 @@ export class HorariosService {
 
     await this.repo.update(id, {
       ...(dto.duracionCorteMin !== undefined && { duracionCorteMin: dto.duracionCorteMin }),
+      ...(dto.tiempoTransicionMin !== undefined && { tiempoTransicionMin: dto.tiempoTransicionMin }),
       ...(dto.activo !== undefined && { activo: dto.activo }),
       horaInicio: nuevasFranjas[0]?.horaInicio,
       horaFin: nuevasFranjas[nuevasFranjas.length - 1]?.horaFin,
@@ -163,22 +231,25 @@ export class HorariosService {
       const franjas = this.getFranjasEfectivas(h);
       if (franjas.length === 0) continue;
 
-      const totalSlots = franjas.reduce((acc, f) => {
-        const mins = this.toMinutes(f.horaFin) - this.toMinutes(f.horaInicio);
-        return acc + Math.floor(mins / h.duracionCorteMin);
-      }, 0);
+      // Capacidad total del día en minutos (suma de todos los bloques).
+      // Se compara contra los minutos ocupados por las citas (duración del
+      // servicio + buffer de transición), lo que funciona con servicios de
+      // duración variable, a diferencia del antiguo conteo de slots fijos.
+      const buffer = h.tiempoTransicionMin ?? 0;
+      const capacidadMin = franjas.reduce((acc, f) =>
+        acc + (this.toMinutes(f.horaFin) - this.toMinutes(f.horaInicio)), 0);
 
-      if (totalSlots <= 0) continue;
+      if (capacidadMin <= 0) continue;
 
-      // Obtener citas del día para ver cuántos slots hay ocupados
       const citas = await this.citasRepo.findAll({
         fechaDesde: `${h.fecha}T00:00:00Z`,
         fechaHasta: `${h.fecha}T23:59:59Z`,
       });
       const citasActivas = citas.filter(c => c.estado !== 'CANCELADA' && c.estado !== 'COMPLETADA');
 
-      const ocupados = citasActivas.length;
-      const ratio = ocupados / totalSlots;
+      const ocupadoMin = citasActivas.reduce(
+        (acc, c) => acc + (c.servicio?.duracionMin ?? 30) + buffer, 0);
+      const ratio = ocupadoMin / capacidadMin;
 
       if (ratio >= 1)          disponibilidad[h.fecha] = 'lleno';
       else if (ratio >= 0.75)  disponibilidad[h.fecha] = 'parcial';
@@ -206,6 +277,10 @@ export class HorariosService {
     });
 
     const step = 15; // Intervalo de inicio de citas en minutos
+    // Buffer de transición: hueco mínimo que debe quedar entre dos citas para
+    // que el peluquero limpie y se prepare. Se exige a ambos lados al calcular
+    // el solape, garantizando esa separación entre cualquier par de citas.
+    const buffer = horario.tiempoTransicionMin ?? 0;
     const allSlots: any[] = [];
     const bloques: any[] = [];
 
@@ -224,7 +299,8 @@ export class HorariosService {
           const citaInicio   = this.toMinutes(new Date(cita.fechaHora).toISOString().slice(11, 16));
           const citaDuracion = cita.servicio?.duracionMin ?? 30;
           const citaFin      = citaInicio + citaDuracion;
-          return slotInicio < citaFin && citaInicio < slotFin;
+          // Conflicto si las citas se solapan o no dejan el buffer entre ellas.
+          return slotInicio < citaFin + buffer && citaInicio < slotFin + buffer;
         });
 
         const slot = { hora: horaStr, disponible: !hasOverlap };
@@ -245,7 +321,7 @@ export class HorariosService {
 
   /**
    * Agenda semanal completa (7 días desde fechaInicio) con cada franja horaria
-   * desglosada en slots discretos (paso = duracionCorteMin del día), marcando
+   * desglosada en slots discretos (rejilla visual fija de 30 min), marcando
    * si están libres u ocupados y, en ese caso, con quién (cliente o invitado).
    * Pensada para el panel de agendamiento rápido de Admin/Empleado.
    */
@@ -274,7 +350,10 @@ export class HorariosService {
       });
       const citasActivas = citasDelDia.filter(c => c.estado !== 'CANCELADA');
 
-      const step = horario.duracionCorteMin;
+      // Rejilla visual fija para el panel de agenda (ya no hay "paso entre
+      // citas"). Cada franja se trocea en huecos de 30 min solo para mostrar
+      // la cuadrícula; la duración real de cada cita la define su servicio.
+      const step = 30;
       const slots: any[] = [];
 
       for (const franja of franjas) {

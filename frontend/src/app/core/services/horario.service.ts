@@ -43,6 +43,16 @@ export class HorarioService {
     return this.http.delete<void>(`${this.API}/${id}`);
   }
 
+  /** Admin: aplica el mismo horario a varias fechas (o al mes completo) */
+  guardarVariosDias(dto: {
+    fechas: string[];
+    tiempoTransicionMin: number;
+    activo: boolean;
+    franjas: { horaInicio: string; horaFin: string; orden: number }[];
+  }): Observable<HorarioLaboral[]> {
+    return this.http.post<HorarioLaboral[]>(`${this.API}/bulk`, dto);
+  }
+
 
   /** Usuario: estado de disponibilidad de cada día del mes */
   getDiasDisponiblesMes(anio: number, mes: number): Observable<MesDisponibilidad> {

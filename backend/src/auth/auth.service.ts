@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../usuarios/usuarios.service';
 import * as bcrypt from 'bcrypt';
@@ -50,12 +50,11 @@ export class AuthService {
    * que el enlace se imprime en la consola del backend.
    */
   async forgotPassword(email: string): Promise<{ message: string }> {
-    const genericResponse = { message: 'Si el email existe, recibirás un enlace de recuperación.' };
-
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      // No revelamos si el email existe o no (evita enumeración de usuarios)
-      return genericResponse;
+      throw new NotFoundException(
+        'No hay ninguna cuenta registrada con ese email. Comprueba que escribiste bien la dirección o regístrate primero.'
+      );
     }
 
     const rawToken = crypto.randomBytes(32).toString('hex');
@@ -74,7 +73,7 @@ export class AuthService {
     console.log(`Enlace (válido 15 min): ${resetLink}`);
     console.log('========================================');
 
-    return genericResponse;
+    return { message: 'Enlace de recuperación enviado. Revisa tu correo electrónico.' };
   }
 
   /** Valida el token de recuperación y establece la nueva contraseña */

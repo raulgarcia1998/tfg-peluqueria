@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -52,6 +52,38 @@ export class UsersService {
       resetPasswordToken: null,
       resetPasswordExpires: null,
     });
+  }
+
+  /** Admin: actualiza rol (y otros campos permitidos) de un usuario */
+  async update(id: number, data: { rol?: string }): Promise<User> {
+    await this.userRepository.update(id, data);
+    return this.findOne(id);
+  }
+
+  /** Actualiza los datos de perfil (nombre, apellidos, email, teléfono) de un usuario */
+  async updatePerfil(
+    id: number,
+    data: { nombre?: string; apellidos?: string; email?: string; telefono?: string },
+  ): Promise<User> {
+    const user = await this.findOne(id); // lanza 404 si no existe
+
+    // El email es único: comprobar que no lo use otro usuario
+    if (data.email && data.email !== user.email) {
+      const existente = await this.userRepository.findOne({ where: { email: data.email } });
+      if (existente && existente.id !== id) {
+        throw new ConflictException('Ya existe un usuario con ese correo electrónico');
+      }
+    }
+
+    // Solo se permiten estos campos; el rol y la contraseña se gestionan aparte
+    const permitido: Partial<User> = {};
+    if (data.nombre    !== undefined) permitido.nombre    = data.nombre;
+    if (data.apellidos !== undefined) permitido.apellidos = data.apellidos;
+    if (data.email     !== undefined) permitido.email     = data.email;
+    if (data.telefono  !== undefined) permitido.telefono  = data.telefono;
+
+    await this.userRepository.update(id, permitido);
+    return this.findOne(id);
   }
 
   /** Busca usuarios por nombre/apellidos/email/teléfono, opcionalmente filtrando por rol */

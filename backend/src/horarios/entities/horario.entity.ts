@@ -22,8 +22,21 @@ export class HorarioLaboral {
   @Column({ name: 'horaFin', nullable: true })
   horaFin?: string;
 
+  /**
+   * @deprecated Sustituido por `tiempoTransicionMin`. Era el "paso entre citas"
+   * (slot fijo), que no encajaba con servicios de duración variable. Se mantiene
+   * la columna para no romper datos antiguos; ya no se usa en la lógica nueva.
+   */
   @Column({ name: 'duracion_corte_min', default: 30 })
   duracionCorteMin!: number;
+
+  /**
+   * Tiempo de transición (buffer) en minutos que se reserva DESPUÉS de cada cita
+   * para que el peluquero limpie, se prepare y descanse antes del siguiente
+   * cliente. Sustituye al antiguo "paso entre citas".
+   */
+  @Column({ name: 'tiempo_transicion_min', default: 10 })
+  tiempoTransicionMin!: number;
 
   @Column({ default: true })
   activo!: boolean;
