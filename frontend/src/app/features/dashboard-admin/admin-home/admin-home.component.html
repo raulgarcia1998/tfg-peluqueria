@@ -13,11 +13,11 @@
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div class="p-5 rounded-3xl bg-black/[0.02] border border-gray-200/5 flex flex-col items-center min-w-[120px]">
-          <span class="text-green-600 text-3xl font-bold">8</span>
+          <span class="text-green-600 text-3xl font-bold">{{ citasHoy() ?? '—' }}</span>
           <span class="text-[10px] text-gray-900/30 uppercase font-bold tracking-widest mt-1">Citas Hoy</span>
         </div>
         <div class="p-5 rounded-3xl bg-black/[0.02] border border-gray-200/5 flex flex-col items-center min-w-[120px]">
-          <span class="text-accent text-3xl font-bold">12</span>
+          <span class="text-accent text-3xl font-bold">{{ totalServicios() ?? '—' }}</span>
           <span class="text-[10px] text-gray-900/30 uppercase font-bold tracking-widest mt-1">Servicios</span>
         </div>
       </div>
