@@ -22,7 +22,11 @@ import { HorariosModule } from './horarios/horarios.module';
       password: process.env['DB_PASSWORD'] || 'changeme',
       database: process.env['DB_NAME'] || 'peluqueria',
       autoLoadEntities: true,
-      synchronize: process.env['NODE_ENV'] !== 'production', // ¡Cuidado en producción!
+      // Crea/actualiza las tablas automáticamente. Controlado por su propia
+      // variable para no depender de NODE_ENV (que algunos PaaS como Railway
+      // fuerzan a 'production'). Por defecto está activo; ponlo a 'false'
+      // cuando uses migraciones explícitas en producción.
+      synchronize: process.env['DB_SYNCHRONIZE'] !== 'false',
     }),
     AuthModule,
     UsuariosModule,
