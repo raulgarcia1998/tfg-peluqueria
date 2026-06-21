@@ -49,7 +49,9 @@ async function bootstrap() {
   });
 
   const port = process.env['PORT'] ?? 3000;
-  await app.listen(port);
+  // Escuchar en 0.0.0.0 (todas las interfaces) es imprescindible para que
+  // el proxy de plataformas como Railway pueda alcanzar la app desde fuera.
+  await app.listen(port, '0.0.0.0');
   console.log(`🚀 API corriendo en: http://localhost:${port}/api/v1`);
   console.log(`📚 Swagger docs: http://localhost:${port}/api/docs`);
 }
